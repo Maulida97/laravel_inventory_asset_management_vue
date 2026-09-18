@@ -1,0 +1,98 @@
+name: inventory-asset-management
+
+services:
+  app:
+    build:
+      context: ./docker/php
+      dockerfile: Dockerfile
+    container_name: inv_asset_app
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini:ro
+      - ./docker/php/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini:ro
+    networks:
+      - inv_asset_network
+    depends_on:
+      - db
+      - cache
+
+  webserver:
+    image: nginx:1.25-alpine
+    container_name: inv_asset_webserver
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - inv_asset_network
+    depends_on:
+      - app
+
+  db:
+    image: mysql:8.0
+    container_name: inv_asset_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: inventory_asset_db
+      MYSQL_USER: inv_user
+      MYSQL_PASSWORD: inv_secret_password
+      MYSQL_ROOT_PASSWORD: root_secret_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - inv_asset_db_data:/var/lib/mysql
+      - ./docker/mysql/my.cnf:/etc/mysql/conf.d/my.cnf:ro
+    networks:
+      - inv_asset_network
+
+  cache:
+    image: redis:7.2-alpine
+    container_name: inv_asset_cache
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+    volumes:
+      - inv_asset_redis_data:/data
+    networks:
+      - inv_asset_network
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: inv_asset_mailpit
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    networks:
+      - inv_asset_network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    container_name: inv_asset_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_USER: root
+      PMA_PASSWORD: root_secret_password
+    ports:
+      - "8081:80"
+    networks:
+      - inv_asset_network
+    depends_on:
+      - db
+
+volumes:
+  inv_asset_db_data:
+    driver: local
+  inv_asset_redis_data:
+    driver: local
+
+networks:
+  inv_asset_network:
+    driver: bridge

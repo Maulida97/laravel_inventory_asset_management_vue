@@ -43,7 +43,7 @@
 | F0-18 | Buat uiux/UI_GUIDELINES.md | DONE | F0-02 |
 | F0-19 | Buat ADR-001 s/d ADR-010 | DONE | F0-02 |
 | F0-20 | Buat AGENT.md | DONE | Semua doc selesai |
-| F0-21 | GitHub repository setup | PLANNED | F0-20 |
+| F0-21 | Git repository setup (local init & develop branch) | DONE | F0-20 |
 
 ---
 
@@ -51,9 +51,9 @@
 
 | ID | Task | Status | Dependency |
 |---|---|---|---|
-| F1-01 | Setup Docker (6 services) | BACKLOG | F0-21 |
-| F1-02 | Verifikasi Docker berjalan | BACKLOG | F1-01 |
-| F1-03 | Laravel 13 installation | BACKLOG | F1-01 |
+| F1-01 | Setup Docker (6 services) | DONE | F0-21 |
+| F1-02 | Verifikasi Docker berjalan | DONE | F1-01 |
+| F1-03 | Laravel 13 installation | PLANNED | F1-01 |
 | F1-04 | Konfigurasi .env | BACKLOG | F1-03 |
 | F1-05 | Database connection testing | BACKLOG | F1-04 |
 | F1-06 | Install Inertia.js + Vue 3 | BACKLOG | F1-03 |
