@@ -1,0 +1,33 @@
+# Git
+.git
+.gitignore
+
+# Documentation and Notes (Local-only)
+/docs
+/architecture
+/uiux
+/decisions
+AGENT.md
+
+# Dependencies & build artifacts
+/vendor
+/node_modules
+/public/build
+/public/hot
+/storage/*.key
+.env
+.env.*
+!.env.example
+
+# Cache & logs
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
+
+# Docker & local storage
+/docker/mysql/data
+*.log
+.phpunit.result.cache
+.idea
+.vscode
