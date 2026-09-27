@@ -25,10 +25,18 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
+            'department_id' => null,
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            'phone_number' => fake()->phoneNumber(),
+            'employee_id' => fake()->unique()->numerify('EMP-#####'),
+            'position' => fake()->jobTitle(),
+            'photo_path' => null,
+            'join_date' => fake()->date(),
+            'is_active' => true,
+            'email_verified_at' => now(),
+            'registration_status' => 'approved',
             'remember_token' => Str::random(10),
         ];
     }
@@ -40,6 +48,26 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Indicate that the user is inactive.
+     */
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_active' => false,
+        ]);
+    }
+
+    /**
+     * Indicate that the user has a pending registration status.
+     */
+    public function pendingRegistration(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'registration_status' => 'pending',
         ]);
     }
 }
