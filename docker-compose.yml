@@ -1,4 +1,4 @@
-﻿name: inventory-asset-management
+name: inventory-asset-management
 
 services:
   app:
@@ -13,6 +13,7 @@ services:
       - vendor_data:/var/www/html/vendor
       - ./docker/php/local.ini:/usr/local/etc/php/conf.d/local.ini:ro
       - ./docker/php/opcache.ini:/usr/local/etc/php/conf.d/opcache.ini:ro
+      - ./docker/php/www.conf:/usr/local/etc/php-fpm.d/zz-custom-pool.conf:ro
     networks:
       - inv_asset_network
     depends_on:
