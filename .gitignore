@@ -31,6 +31,12 @@ yarn-error.log
 !/storage/framework/views/.gitignore
 /storage/logs/*
 !/storage/logs/.gitignore
+/docs/
+/architecture/
+/uiux/
+/decisions/
+Agent.md
+
 
 # IDE & OS
 .DS_Store
