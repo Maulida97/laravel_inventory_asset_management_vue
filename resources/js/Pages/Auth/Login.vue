@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted } from 'vue';
-import { Head, Link, router } from '@inertiajs/vue3';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import { useTheme } from '../../Composables/useTheme';
 
 const { theme, toggleTheme, initTheme } = useTheme();
@@ -9,23 +9,22 @@ onMounted(() => {
     initTheme();
 });
 
-const form = ref({
-    email: 'admin@assetflow.io',
-    password: 'secret',
-    remember: true,
+const form = useForm({
+    email: '',
+    password: '',
+    remember: false,
 });
 
 const showPassword = ref(false);
-const isLoading = ref(false);
 
 const togglePasswordVisibility = () => {
     showPassword.value = !showPassword.value;
 };
 
 const handleLogin = () => {
-    isLoading.value = true;
-    // For prototype / mockup demonstration, redirect to dashboard
-    router.visit('/');
+    form.post('/login', {
+        onFinish: () => form.reset('password'),
+    });
 };
 </script>
 
@@ -70,6 +69,14 @@ const handleLogin = () => {
 
             <!-- Login Card -->
             <div class="login-card">
+                <!-- Alert Banner for Errors -->
+                <div v-if="form.errors.email" class="alert-error-banner">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                    </svg>
+                    <span>{{ form.errors.email }}</span>
+                </div>
+
                 <form @submit.prevent="handleLogin">
                     <!-- Email Input -->
                     <div class="form-group">
@@ -86,9 +93,11 @@ const handleLogin = () => {
                                 id="email" 
                                 v-model="form.email"
                                 class="form-input-custom" 
+                                :class="{ 'input-error': form.errors.email }"
                                 placeholder="nama@perusahaan.com" 
                                 required 
                                 autocomplete="email"
+                                autofocus
                             />
                         </div>
                     </div>
@@ -111,6 +120,7 @@ const handleLogin = () => {
                                 id="password" 
                                 v-model="form.password"
                                 class="form-input-custom" 
+                                :class="{ 'input-error': form.errors.password }"
                                 placeholder="••••••••" 
                                 required 
                                 autocomplete="current-password"
@@ -131,6 +141,7 @@ const handleLogin = () => {
                                 </svg>
                             </button>
                         </div>
+                        <p v-if="form.errors.password" class="input-error-msg">{{ form.errors.password }}</p>
                     </div>
 
                     <!-- Remember Me -->
@@ -142,8 +153,8 @@ const handleLogin = () => {
                     </div>
 
                     <!-- Submit Button -->
-                    <button type="submit" class="btn-submit" :disabled="isLoading">
-                        <span>{{ isLoading ? 'Memproses...' : 'Masuk ke Dashboard' }}</span>
+                    <button type="submit" class="btn-submit" :disabled="form.processing">
+                        <span>{{ form.processing ? 'Memproses...' : 'Masuk ke Dashboard' }}</span>
                         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
                         </svg>
@@ -153,7 +164,7 @@ const handleLogin = () => {
                 <div class="divider">atau masuk dengan</div>
 
                 <!-- Single Sign-On / Google Button -->
-                <button type="button" class="btn-oauth" @click="handleLogin">
+                <button type="button" class="btn-oauth" disabled>
                     <svg width="18" height="18" viewBox="0 0 24 24">
                         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                         <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -303,6 +314,33 @@ const handleLogin = () => {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.alert-error-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: var(--radius-md);
+    color: #ef4444;
+    font-size: 0.875rem;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.input-error {
+    border-color: #ef4444 !important;
+}
+.input-error:focus {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25) !important;
+}
+
+.input-error-msg {
+    margin-top: 6px;
+    font-size: 0.8125rem;
+    color: #ef4444;
 }
 
 .form-input-custom {

@@ -5,8 +5,10 @@ use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 
-test('it verifies home page returns successful response', function () {
-    $response = $this->get('/');
+test('it verifies home page returns successful response for authenticated user', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->get('/');
     $response->assertStatus(200);
 });
 
