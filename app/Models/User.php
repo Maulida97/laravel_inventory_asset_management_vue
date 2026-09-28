@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
@@ -16,7 +17,7 @@ class User extends Authenticatable
     /**
      * The attributes that are mass assignable.
      *
-     * @array<int, string>
+     * @var array<int, string>
      */
     protected $fillable = [
         'department_id',
@@ -35,7 +36,7 @@ class User extends Authenticatable
     /**
      * The attributes that should be hidden for serialization.
      *
-     * @array<int, string>
+     * @var array<int, string>
      */
     protected $hidden = [
         'password',
@@ -56,4 +57,13 @@ class User extends Authenticatable
             'join_date' => 'date',
         ];
     }
+
+    /**
+     * Get the department that the user belongs to.
+     */
+    public function department(): BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
 }
+
