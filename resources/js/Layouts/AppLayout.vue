@@ -4,6 +4,26 @@ import { Link, usePage } from '@inertiajs/vue3';
 import { useTheme } from '../Composables/useTheme';
 
 const { theme, toggleTheme, initTheme } = useTheme();
+const page = usePage();
+const user = computed(() => page.props.auth?.user);
+
+const userInitials = computed(() => {
+    if (!user.value?.name) return 'U';
+    return user.value.name
+        .split(' ')
+        .map(n => n[0])
+        .slice(0, 2)
+        .join('')
+        .toUpperCase();
+});
+
+const userRole = computed(() => {
+    if (user.value?.roles && user.value.roles.length > 0) {
+        return user.value.roles[0].replace(/[-_]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    }
+    return user.value?.position || 'Staff';
+});
+
 const isSidebarOpen = ref(false);
 const isNotificationOpen = ref(false);
 const isUserMenuOpen = ref(false);
@@ -189,13 +209,13 @@ const closeSidebar = () => {
             </nav>
 
             <div class="sidebar-footer">
-                <Link href="/login" class="sidebar-user">
-                    <div class="user-avatar">JS</div>
+                <div class="sidebar-user">
+                    <div class="user-avatar">{{ userInitials }}</div>
                     <div class="user-info">
-                        <span class="user-name">John Smith</span>
-                        <span class="user-role">Administrator</span>
+                        <span class="user-name">{{ user?.name || 'User' }}</span>
+                        <span class="user-role">{{ userRole }}</span>
                     </div>
-                </Link>
+                </div>
             </div>
         </aside>
 
@@ -293,14 +313,14 @@ const closeSidebar = () => {
 
                     <!-- User Menu Dropdown Wrapper -->
                     <div class="user-menu-wrapper" style="position: relative;">
-                        <button class="topbar-user" @click="toggleUserMenu" style="background: none; border: none; padding: 0;">
-                            <div class="user-avatar small">JS</div>
+                        <button class="topbar-user" @click="toggleUserMenu" style="background: none; border: none; padding: 0; cursor: pointer;">
+                            <div class="user-avatar small">{{ userInitials }}</div>
                         </button>
 
                         <div v-if="isUserMenuOpen" class="notif-panel" style="width: 220px; right: 0;">
                             <div style="padding: 14px 16px; border-bottom: 1px solid var(--border);">
-                                <div style="font-size: 0.875rem; font-weight: 600; color: var(--text-primary);">John Smith</div>
-                                <div style="font-size: 0.75rem; color: var(--text-tertiary);">admin@assetflow.io</div>
+                                <div style="font-size: 0.875rem; font-weight: 600; color: var(--text-primary);">{{ user?.name || 'User' }}</div>
+                                <div style="font-size: 0.75rem; color: var(--text-tertiary);">{{ user?.email || '' }}</div>
                             </div>
                             <div style="padding: 6px;">
                                 <Link href="#/settings" class="nav-item" style="padding: 8px 12px; margin-bottom: 2px;" @click="isUserMenuOpen = false">
@@ -309,7 +329,7 @@ const closeSidebar = () => {
                                     </svg>
                                     <span>Pengaturan Akun</span>
                                 </Link>
-                                <Link href="/login" class="nav-item" style="padding: 8px 12px; color: var(--danger);" @click="isUserMenuOpen = false">
+                                <Link href="/logout" method="post" as="button" class="nav-item" style="padding: 8px 12px; color: var(--danger); width: 100%; border: none; background: transparent; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 8px; font-family: inherit; font-size: 0.875rem;" @click="isUserMenuOpen = false">
                                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
                                     </svg>
