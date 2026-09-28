@@ -36,14 +36,14 @@ test('it can create roles and permissions with default web guard', function () {
 test('it enforces unique constraint on role name and guard', function () {
     Role::create(['name' => 'Manager', 'guard_name' => 'web']);
 
-    expect(fn () => Role::create(['name' => 'Manager', 'guard_name' => 'web']))
+    expect(fn() => Role::create(['name' => 'Manager', 'guard_name' => 'web']))
         ->toThrow(RoleAlreadyExists::class);
 });
 
 test('it enforces unique constraint on permission name and guard', function () {
     Permission::create(['name' => 'location.view', 'guard_name' => 'web']);
 
-    expect(fn () => Permission::create(['name' => 'location.view', 'guard_name' => 'web']))
+    expect(fn() => Permission::create(['name' => 'location.view', 'guard_name' => 'web']))
         ->toThrow(PermissionAlreadyExists::class);
 });
 
