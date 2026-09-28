@@ -40,12 +40,13 @@ class LoginRequest extends FormRequest
      */
     public function authenticate(): void
     {
-        $email = Str::lower($this->input('email'));
+        $email = Str::lower($this->input('email')); //Normalisasi email ke lowercase.
         $password = (string) $this->input('password');
 
-        $user = User::where('email', $email)->first();
+        $user = User::where('email', $email)->first(); //Mencari user berdasarkan email.
 
-        if (! $user || ! Hash::check($password, $user->password)) {
+        //Cek kecocokan password hash via Hash::check
+        if (! $user || ! Hash::check($password, $user->password)) { //Memeriksa apakah user ada dan password benar.
             throw ValidationException::withMessages([
                 'email' => __('Email atau kata sandi yang Anda masukkan salah.'),
             ]);
