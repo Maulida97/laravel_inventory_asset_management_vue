@@ -45,6 +45,7 @@ jobs:
 
           echo "Downloading artifact dari run ID: $RUN_ID"
           gh run download "$RUN_ID" \
+            --repo Maulida97/laravel_inventory_asset_management_vue \
             --name frontend-build \
             --dir frontend-build
 
