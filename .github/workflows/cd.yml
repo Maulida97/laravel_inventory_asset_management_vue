@@ -1,23 +1,60 @@
 name: Inventra CD
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Inventra CI"]
     branches:
       - develop
+    types:
+      - completed
   workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
 
 jobs:
   deploy:
     name: Deploy to VPS
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
 
     steps:
+      - name: Download Frontend Build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -n "${{ github.event.workflow_run.id }}" ]; then
+            # Triggered by workflow_run: gunakan run ID langsung
+            RUN_ID="${{ github.event.workflow_run.id }}"
+          else
+            # Triggered manual (workflow_dispatch): cari CI run terakhir yang sukses
+            RUN_ID=$(gh run list \
+              --workflow=ci.yml \
+              --branch=develop \
+              --status success \
+              --limit 1 \
+              --json databaseId \
+              --jq '.[0].databaseId')
+
+            if [ -z "$RUN_ID" ]; then
+              echo "Tidak ada CI run sukses ditemukan di branch develop"
+              exit 1
+            fi
+          fi
+
+          echo "Downloading artifact dari run ID: $RUN_ID"
+          gh run download "$RUN_ID" \
+            --name frontend-build \
+            --dir frontend-build
+
       - name: Deploy to VPS
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/inventra_deploy
           chmod 600 ~/.ssh/inventra_deploy
 
+          # 1. Prepare source code & pastikan public/build ada
           ssh \
             -i ~/.ssh/inventra_deploy \
             -p "${{ secrets.VPS_PORT }}" \
@@ -26,7 +63,6 @@ jobs:
             "
               set -e
 
-              # Clone jika belum ada, pull jika sudah ada
               if [ ! -d /opt/inventra/.git ]; then
                 git clone https://github.com/Maulida97/laravel_inventory_asset_management_vue.git /opt/inventra
               fi
@@ -36,10 +72,31 @@ jobs:
               git checkout develop
               git reset --hard origin/develop
 
-              # Copy .env jika belum ada
+              mkdir -p public/build
+
               if [ ! -f .env ]; then
                 cp .env.example .env
               fi
+            "
+
+          # 2. Upload frontend build dari CI artifact
+          scp \
+            -i ~/.ssh/inventra_deploy \
+            -P "${{ secrets.VPS_PORT }}" \
+            -o StrictHostKeyChecking=no \
+            -r frontend-build/. \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/inventra/public/build/"
+
+          # 3. Docker & Laravel deploy
+          ssh \
+            -i ~/.ssh/inventra_deploy \
+            -p "${{ secrets.VPS_PORT }}" \
+            -o StrictHostKeyChecking=no \
+            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
+            "
+              set -e
+
+              cd /opt/inventra
 
               docker compose up -d --build
               docker compose exec -T app composer install --no-dev --optimize-autoloader
