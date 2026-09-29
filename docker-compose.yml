@@ -1,6 +1,22 @@
 name: inventory-asset-management
 
 services:
+
+ phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: inv_asset_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      UPLOAD_LIMIT: 50M
+    ports:
+      - "127.0.0.1:8081:80"
+    networks:
+      - inv_asset_network
+    depends_on:
+      - mysql
+
   app:
     build:
       context: .
