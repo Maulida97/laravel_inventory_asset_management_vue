@@ -63,7 +63,7 @@ const handleLogin = () => {
                     </div>
                     <span class="login-logo-text">AssetFlow</span>
                 </Link>
-                <h1 class="login-title">Selamat Datang Kembali, Salama Hai</h1>
+                <h1 class="login-title">Selamat Datang Kembali, Salam</h1>
                 <p class="login-subtitle">Masuk ke sistem manajemen aset & inventaris</p>
             </div>
 
