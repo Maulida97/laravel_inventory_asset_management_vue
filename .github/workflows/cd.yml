@@ -31,7 +31,7 @@ jobs:
               cd /opt/inventra
               git fetch origin
               git checkout develop
-              git pull origin develop
+              git reset --hard origin/develop
 
               # Copy .env jika belum ada
               if [ ! -f .env ]; then
