@@ -52,3 +52,4 @@ Thumbs.db
 # Docker volumes (if locally mapped)
 /docker/mysql/data/*
 !/docker/mysql/data/.gitkeep
+docker-compose.override.yml
