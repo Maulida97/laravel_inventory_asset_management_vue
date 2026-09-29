@@ -1,6 +1,9 @@
 name: Inventra CD
 
 on:
+  push:
+    branches:
+      - develop
   workflow_dispatch:
 
 jobs:
