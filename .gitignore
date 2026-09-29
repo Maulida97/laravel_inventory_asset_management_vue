@@ -53,3 +53,7 @@ Thumbs.db
 /docker/mysql/data/*
 !/docker/mysql/data/.gitkeep
 docker-compose.override.yml
+
+# SSL certificates
+/docker/nginx/ssl/*
+!/docker/nginx/ssl/.gitkeep
