@@ -20,4 +20,24 @@ jobs:
             -p "${{ secrets.VPS_PORT }}" \
             -o StrictHostKeyChecking=no \
             "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
-            "cd /opt/inventra && git pull origin develop && docker compose up -d --build && docker compose exec -T app php artisan migrate --force"
+            "
+              set -e
+
+              # Clone jika belum ada, pull jika sudah ada
+              if [ ! -d /opt/inventra/.git ]; then
+                sudo git clone https://github.com/Maulida97/laravel_inventory_asset_management_vue.git /opt/inventra
+              fi
+
+              cd /opt/inventra
+              sudo git fetch origin
+              sudo git checkout develop
+              sudo git pull origin develop
+
+              # Copy .env jika belum ada
+              if [ ! -f .env ]; then
+                sudo cp .env.example .env
+              fi
+
+              sudo docker compose up -d --build
+              sudo docker compose exec -T app php artisan migrate --force
+            "
