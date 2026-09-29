@@ -80,7 +80,7 @@ const handleLogin = () => {
                 <form @submit.prevent="handleLogin">
                     <!-- Email Input -->
                     <div class="form-group">
-                        <label class="form-label" for="email">Alamat Email</label>
+                        <label class="form-label" for="email">Alamat Email kamu</label>
                         <div class="input-wrapper">
                             <span class="input-icon-left">
                                 <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
