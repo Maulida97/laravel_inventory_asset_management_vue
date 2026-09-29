@@ -2,7 +2,7 @@ name: inventory-asset-management
 
 services:
 
- phpmyadmin:
+  phpmyadmin:
     image: phpmyadmin:latest
     container_name: inv_asset_phpmyadmin
     restart: unless-stopped
