@@ -33,7 +33,7 @@ const toggleDropdown = (e) => {
 
 const handleLogout = () => {
     isOpen.value = false;
-    router.post(route('logout'));
+    router.post('/logout');
 };
 
 const handleClickOutside = (e) => {
