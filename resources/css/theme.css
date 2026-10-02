@@ -166,8 +166,8 @@ body {
   background-color: var(--bg-page);
   color: var(--text-primary);
   line-height: 1.5;
-  overflow: hidden;
   height: 100vh;
+  overflow: hidden;
   transition: background-color var(--transition), color var(--transition);
 }
 
