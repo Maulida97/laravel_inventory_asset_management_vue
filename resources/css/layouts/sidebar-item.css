@@ -1,0 +1,257 @@
+.sidebar-item-group {
+    position: relative;
+    width: 100%;
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5625rem 0.75rem;
+    border-radius: var(--radius, 8px);
+    color: var(--text-secondary);
+    font-size: 0.84375rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.15s ease-in-out;
+    width: 100%;
+    box-sizing: border-box;
+    cursor: pointer;
+    background: transparent;
+    border: 1px solid transparent;
+    text-align: left;
+    position: relative;
+}
+
+.nav-item.item-collapsed {
+    justify-content: center;
+    padding: 0.5625rem 0;
+}
+
+.nav-item:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-hover);
+}
+
+.nav-item.active {
+    color: var(--primary);
+    background-color: var(--bg-active);
+    font-weight: 600;
+    border-color: rgba(99, 102, 241, 0.15);
+}
+
+.nav-item-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+    color: inherit;
+}
+
+.icon-svg {
+    width: 18px;
+    height: 18px;
+    stroke-width: 2;
+    display: block;
+}
+
+.child-icon-svg {
+    width: 14px;
+    height: 14px;
+    stroke-width: 2;
+    flex-shrink: 0;
+    color: inherit;
+}
+
+.nav-item-label {
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.3;
+}
+
+.nav-item-badge {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    padding: 0.125rem 0.4375rem;
+    border-radius: var(--radius-full, 9999px);
+    line-height: 1;
+}
+
+.badge-danger {
+    background-color: var(--danger-light);
+    color: var(--danger);
+}
+
+.badge-warning {
+    background-color: var(--warning-light);
+    color: var(--warning);
+}
+
+.badge-primary {
+    background-color: var(--bg-active);
+    color: var(--primary);
+}
+
+.badge-secondary {
+    background-color: var(--bg-muted);
+    color: var(--text-secondary);
+}
+
+.collapsed-badge-dot {
+    position: absolute;
+    top: 6px;
+    right: 10px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+
+.dot-danger {
+    background-color: var(--danger);
+}
+
+.dot-warning {
+    background-color: var(--warning);
+}
+
+.dot-primary {
+    background-color: var(--primary);
+}
+
+.chevron-icon {
+    transition: transform 0.2s ease;
+    color: var(--text-tertiary);
+    flex-shrink: 0;
+}
+
+.chevron-icon.rotated {
+    transform: rotate(180deg);
+}
+
+.nav-submenu {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1875rem;
+    padding-left: 1.5rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+}
+
+.submenu-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4375rem 0.625rem;
+    border-radius: var(--radius-sm, 6px);
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.submenu-item:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-hover);
+}
+
+.submenu-item.active {
+    color: var(--primary);
+    background-color: var(--bg-active);
+    font-weight: 600;
+}
+
+.submenu-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: currentColor;
+    opacity: 0.6;
+    flex-shrink: 0;
+}
+
+/* Floating Tooltip / Flyout when collapsed */
+.collapsed-tooltip {
+    position: absolute;
+    left: calc(100% + 8px);
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    padding: 0.375rem 0.75rem;
+    border-radius: var(--radius-sm, 6px);
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--border);
+    z-index: 60;
+    pointer-events: none;
+}
+
+.collapsed-flyout-menu {
+    position: absolute;
+    left: calc(100% + 8px);
+    top: 0;
+    width: 210px;
+    background-color: var(--bg-card);
+    border-radius: var(--radius-md, 10px);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-xl);
+    z-index: 60;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.flyout-header {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.25rem 0.5rem 0.375rem;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.flyout-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+    padding-top: 0.25rem;
+}
+
+.flyout-link-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.375rem 0.5rem;
+    border-radius: var(--radius-sm, 6px);
+    color: var(--text-secondary);
+    font-size: 0.8125rem;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.flyout-link-item:hover {
+    color: var(--text-primary);
+    background-color: var(--bg-hover);
+}
+
+.flyout-link-item.active {
+    color: var(--primary);
+    background-color: var(--bg-active);
+    font-weight: 600;
+}
+
+.flyout-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: currentColor;
+    opacity: 0.6;
+}

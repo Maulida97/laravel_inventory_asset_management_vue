@@ -183,4 +183,5 @@ const handleLogin = () => {
     </div>
 </template>
 
-<style scoped src="../../../css/pages/login.css"></style>
+<style src="@/../css/pages/login.css" scoped></style>
+
