@@ -16,8 +16,21 @@ export function useTheme() {
         }
     };
 
+    let transitionTimeout = null;
+
     const toggleTheme = () => {
+        if (typeof document !== 'undefined') {
+            document.documentElement.classList.add('theme-transitioning');
+        }
+
         applyTheme(theme.value === 'dark' ? 'light' : 'dark');
+
+        if (typeof window !== 'undefined') {
+            if (transitionTimeout) clearTimeout(transitionTimeout);
+            transitionTimeout = setTimeout(() => {
+                document.documentElement.classList.remove('theme-transitioning');
+            }, 400);
+        }
     };
 
     const initTheme = () => {
