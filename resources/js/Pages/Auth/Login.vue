@@ -184,3 +184,4 @@ const handleLogin = () => {
 </template>
 
 <style src="@/../css/pages/login.css" scoped></style>
+
