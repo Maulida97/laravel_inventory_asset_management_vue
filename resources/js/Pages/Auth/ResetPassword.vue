@@ -211,7 +211,7 @@ const submit = () => {
 
             <!-- Footer -->
             <div class="login-footer">
-                Batal mengatur ulang? <Link :href="route('login')">Kembali ke halaman masuk</Link>
+                Batal mengatur ulang? <Link href="/login">Kembali ke halaman masuk</Link>
             </div>
         </div>
     </div>

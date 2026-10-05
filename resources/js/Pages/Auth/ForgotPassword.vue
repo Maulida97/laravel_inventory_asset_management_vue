@@ -121,7 +121,7 @@ const submit = () => {
 
             <!-- Footer -->
             <div class="login-footer">
-                Ingat kata sandi Anda? <Link :href="route('login')">Kembali ke halaman masuk</Link>
+                Ingat kata sandi Anda? <Link href="/login">Kembali ke halaman masuk</Link>
             </div>
         </div>
     </div>

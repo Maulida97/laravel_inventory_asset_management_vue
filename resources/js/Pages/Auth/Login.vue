@@ -122,7 +122,7 @@ const handleLogin = () => {
                     <div class="form-group">
                         <div class="form-label-row">
                             <label class="form-label" for="password">Kata Sandi</label>
-                            <Link :href="route('password.request')" class="forgot-link">Lupa kata sandi?</Link>
+                            <Link href="/forgot-password" class="forgot-link">Lupa kata sandi?</Link>
                         </div>
                         <div class="input-wrapper">
                             <span class="input-icon-left">
