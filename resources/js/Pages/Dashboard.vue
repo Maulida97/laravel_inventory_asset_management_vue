@@ -14,8 +14,6 @@ import {
     CheckCircle2,
     Clock,
     Sparkles,
-    Building2,
-    ShieldCheck,
     ChevronDown,
     Filter,
 } from 'lucide-vue-next';
@@ -222,19 +220,9 @@ const attentionItems = [
             <!-- Header Salam & Filter Periode -->
             <div class="dash-header">
                 <div class="dash-header-left">
-                    <div class="dash-title-row">
-                        <h1 class="dash-title">Selamat Datang, {{ user.name }}!</h1>
-                        <span class="dash-user-badge">
-                            <ShieldCheck class="w-3.5 h-3.5" />
-                            {{ primaryRole }}
-                        </span>
-                        <span v-if="user.department" class="dash-user-badge">
-                            <Building2 class="w-3.5 h-3.5" />
-                            {{ user.department }}
-                        </span>
-                    </div>
+                    <h1 class="dash-title">Selamat Datang, {{ user.name }}!</h1>
                     <p class="dash-subtitle">
-                        Ringkasan metrik operasional sistem manajemen aset dan logistik inventaris
+                        {{ primaryRole }}<template v-if="user.department"> · {{ user.department }}</template> · Pantau kondisi aset dan inventaris perusahaan.
                     </p>
                 </div>
 
@@ -336,19 +324,22 @@ const attentionItems = [
                             </div>
                             <span class="dash-stat-label">{{ stat.title }}</span>
                         </div>
+                    </div>
+                    <div class="dash-stat-number">{{ stat.value }}</div>
+                    <div class="dash-stat-sub">
                         <span
-                            class="dash-badge"
+                            v-if="stat.badge"
+                            class="dash-stat-trend"
                             :class="{
-                                'dash-badge-positive': stat.badgeType === 'positive',
-                                'dash-badge-warning': stat.badgeType === 'warning',
-                                'dash-badge-neutral': stat.badgeType === 'neutral',
+                                'trend-positive': stat.badgeType === 'positive',
+                                'trend-warning': stat.badgeType === 'warning',
                             }"
                         >
                             {{ stat.badge }}
                         </span>
+                        <span v-if="stat.badge && stat.subtitle"> · </span>
+                        <span>{{ stat.subtitle }}</span>
                     </div>
-                    <div class="dash-stat-number">{{ stat.value }}</div>
-                    <div class="dash-stat-sub">{{ stat.subtitle }}</div>
                 </div>
             </div>
 
@@ -424,7 +415,7 @@ const attentionItems = [
                     </h2>
                     <span class="dash-date-pill">
                         <Sparkles class="w-3.5 h-3.5 text-primary" />
-                        Real-time feed
+                        Pembaruan terkini
                     </span>
                 </div>
 
