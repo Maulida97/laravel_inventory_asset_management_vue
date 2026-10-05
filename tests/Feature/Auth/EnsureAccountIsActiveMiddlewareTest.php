@@ -50,9 +50,8 @@ test('authenticated user with pending registration status is logged out and redi
 });
 
 test('authenticated user with rejected registration status is logged out and redirected to login', function () {
-    $user = User::factory()->create([
+    $user = User::factory()->rejectedRegistration()->create([
         'is_active' => true,
-        'registration_status' => 'rejected',
     ]);
 
     $response = $this->actingAs($user)->get(route('dashboard'));

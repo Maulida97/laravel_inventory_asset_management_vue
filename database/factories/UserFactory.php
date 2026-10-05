@@ -70,4 +70,14 @@ class UserFactory extends Factory
             'registration_status' => 'pending',
         ]);
     }
+
+    /**
+     * Indicate that the user has a rejected registration status.
+     */
+    public function rejectedRegistration(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'registration_status' => 'rejected',
+        ]);
+    }
 }
