@@ -4,9 +4,13 @@ import { Head, Link, useForm } from '@inertiajs/vue3';
 import { useTheme } from '../../Composables/useTheme';
 
 const props = defineProps({
-    status: {
+    email: {
         type: String,
-        default: null,
+        default: '',
+    },
+    token: {
+        type: String,
+        required: true,
     },
 });
 
@@ -17,26 +21,32 @@ onMounted(() => {
 });
 
 const form = useForm({
-    email: '',
+    token: props.token,
+    email: props.email || '',
     password: '',
-    remember: false,
+    password_confirmation: '',
 });
 
 const showPassword = ref(false);
+const showPasswordConfirmation = ref(false);
 
 const togglePasswordVisibility = () => {
     showPassword.value = !showPassword.value;
 };
 
-const handleLogin = () => {
-    form.post('/login', {
-        onFinish: () => form.reset('password'),
+const togglePasswordConfirmationVisibility = () => {
+    showPasswordConfirmation.value = !showPasswordConfirmation.value;
+};
+
+const submit = () => {
+    form.post('/reset-password', {
+        onFinish: () => form.reset('password', 'password_confirmation'),
     });
 };
 </script>
 
 <template>
-    <Head title="Masuk — AssetFlow Inventory" />
+    <Head title="Atur Ulang Kata Sandi — AssetFlow Inventory" />
 
     <div class="login-wrapper">
         <div class="ambient-glow"></div>
@@ -70,22 +80,13 @@ const handleLogin = () => {
                     </div>
                     <span class="login-logo-text">AssetFlow</span>
                 </Link>
-                <h1 class="login-title">Selamat Datang Kembali</h1>
-                <p class="login-subtitle">Masuk ke sistem manajemen aset & inventaris</p>
+                <h1 class="login-title">Atur Ulang Kata Sandi</h1>
+                <p class="login-subtitle">Masukkan kata sandi baru untuk akun Anda</p>
             </div>
 
-            <!-- Login Card -->
+            <!-- Card -->
             <div class="login-card">
-                <!-- Alert Banner for Status / Success -->
-                <div v-if="status" class="alert-success-banner">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                        <polyline points="22 4 12 14.01 9 11.01"/>
-                    </svg>
-                    <span>{{ status }}</span>
-                </div>
-
-                <!-- Alert Banner for Errors -->
+                <!-- Error Banner -->
                 <div v-if="form.errors.email" class="alert-error-banner">
                     <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
@@ -93,10 +94,10 @@ const handleLogin = () => {
                     <span>{{ form.errors.email }}</span>
                 </div>
 
-                <form @submit.prevent="handleLogin">
+                <form @submit.prevent="submit">
                     <!-- Email Input -->
                     <div class="form-group">
-                        <label class="form-label" for="email">Alamat Email kamu</label>
+                        <label class="form-label" for="email">Alamat Email</label>
                         <div class="input-wrapper">
                             <span class="input-icon-left">
                                 <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -113,17 +114,13 @@ const handleLogin = () => {
                                 placeholder="nama@perusahaan.com" 
                                 required 
                                 autocomplete="email"
-                                autofocus
                             />
                         </div>
                     </div>
 
-                    <!-- Password Input -->
+                    <!-- New Password Input -->
                     <div class="form-group">
-                        <div class="form-label-row">
-                            <label class="form-label" for="password">Kata Sandi</label>
-                            <Link :href="route('password.request')" class="forgot-link">Lupa kata sandi?</Link>
-                        </div>
+                        <label class="form-label" for="password">Kata Sandi Baru</label>
                         <div class="input-wrapper">
                             <span class="input-icon-left">
                                 <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -137,9 +134,10 @@ const handleLogin = () => {
                                 v-model="form.password"
                                 class="form-input-custom" 
                                 :class="{ 'input-error': form.errors.password }"
-                                placeholder="••••••••" 
+                                placeholder="Minimal 8 karakter" 
                                 required 
-                                autocomplete="current-password"
+                                autocomplete="new-password"
+                                autofocus
                             />
                             <button 
                                 type="button" 
@@ -160,44 +158,63 @@ const handleLogin = () => {
                         <p v-if="form.errors.password" class="input-error-msg">{{ form.errors.password }}</p>
                     </div>
 
-                    <!-- Remember Me -->
-                    <div class="remember-row">
-                        <label class="checkbox-label">
-                            <input type="checkbox" v-model="form.remember" class="checkbox-custom" />
-                            <span>Ingat saya di perangkat ini</span>
-                        </label>
+                    <!-- Confirm Password Input -->
+                    <div class="form-group">
+                        <label class="form-label" for="password_confirmation">Konfirmasi Kata Sandi Baru</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon-left">
+                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                </svg>
+                            </span>
+                            <input 
+                                :type="showPasswordConfirmation ? 'text' : 'password'" 
+                                id="password_confirmation" 
+                                v-model="form.password_confirmation"
+                                class="form-input-custom" 
+                                :class="{ 'input-error': form.errors.password_confirmation }"
+                                placeholder="Ulangi kata sandi baru" 
+                                required 
+                                autocomplete="new-password"
+                            />
+                            <button 
+                                type="button" 
+                                class="password-toggle" 
+                                @click="togglePasswordConfirmationVisibility" 
+                                :aria-label="showPasswordConfirmation ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'"
+                            >
+                                <svg v-if="!showPasswordConfirmation" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                <svg v-else width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                                    <line x1="1" y1="1" x2="23" y2="23"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <p v-if="form.errors.password_confirmation" class="input-error-msg">{{ form.errors.password_confirmation }}</p>
                     </div>
 
                     <!-- Submit Button -->
                     <button type="submit" class="btn-submit" :disabled="form.processing">
-                        <span>{{ form.processing ? 'Memproses...' : 'Masuk ke Dashboard' }}</span>
+                        <span>{{ form.processing ? 'Menyimpan Kata Sandi...' : 'Perbarui Kata Sandi' }}</span>
                         <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                            <polyline points="17 21 17 13 7 13 7 21"/>
+                            <polyline points="7 3 7 8 15 8"/>
                         </svg>
                     </button>
                 </form>
-
-                <div class="divider">atau masuk dengan</div>
-
-                <!-- Single Sign-On / Google Button -->
-                <button type="button" class="btn-oauth" disabled>
-                    <svg width="18" height="18" viewBox="0 0 24 24">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                    </svg>
-                    <span>Masuk dengan Google Workspace</span>
-                </button>
             </div>
 
             <!-- Footer -->
             <div class="login-footer">
-                Belum memiliki akun? <a href="#">Hubungi Administrator IT</a>
+                Batal mengatur ulang? <Link :href="route('login')">Kembali ke halaman masuk</Link>
             </div>
         </div>
     </div>
 </template>
 
 <style src="@/../css/pages/login.css" scoped></style>
-
