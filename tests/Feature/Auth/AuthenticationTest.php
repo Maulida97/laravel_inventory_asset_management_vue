@@ -223,7 +223,7 @@ test('users are redirected to intended url after successful authentication', fun
     ]);
 
     $this->assertAuthenticatedAs($user);
-    $response->assertRedirect(route('dashboard'));
+    $response->assertRedirect('/dashboard');
 });
 
 test('users can logout', function () {
