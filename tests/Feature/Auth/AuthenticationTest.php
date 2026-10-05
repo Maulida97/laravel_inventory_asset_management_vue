@@ -7,9 +7,48 @@ test('login screen can be rendered for guest', function () {
     $response = $this->get('/login');
 
     $response->assertStatus(200);
+    $response->assertInertia(fn ($page) => $page->component('Auth/Login'));
 });
 
-test('users can authenticate using the login screen', function () {
+test('authenticated users are redirected from login screen to dashboard', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->get('/login');
+
+    $response->assertRedirect(route('dashboard'));
+});
+
+test('email is required to authenticate', function () {
+    $response = $this->from('/login')->post('/login', [
+        'email' => '',
+        'password' => 'secret123',
+    ]);
+
+    $this->assertGuest();
+    $response->assertSessionHasErrors('email');
+});
+
+test('password is required to authenticate', function () {
+    $response = $this->from('/login')->post('/login', [
+        'email' => 'staff@assetflow.io',
+        'password' => '',
+    ]);
+
+    $this->assertGuest();
+    $response->assertSessionHasErrors('password');
+});
+
+test('email must be a valid email format', function () {
+    $response = $this->from('/login')->post('/login', [
+        'email' => 'invalid-email-format',
+        'password' => 'secret123',
+    ]);
+
+    $this->assertGuest();
+    $response->assertSessionHasErrors('email');
+});
+
+test('users can authenticate using valid credentials', function () {
     $user = User::factory()->create([
         'email' => 'staff@assetflow.io',
         'password' => 'secret123',
@@ -22,12 +61,41 @@ test('users can authenticate using the login screen', function () {
         'password' => 'secret123',
     ]);
 
-    $this->assertAuthenticated();
+    $this->assertAuthenticatedAs($user);
     $response->assertRedirect(route('dashboard'));
 });
 
-test('users cannot authenticate with invalid password', function () {
+test('users can authenticate with case-insensitive email', function () {
     $user = User::factory()->create([
+        'email' => 'staff@assetflow.io',
+        'password' => 'secret123',
+        'is_active' => true,
+        'registration_status' => 'approved',
+    ]);
+
+    $response = $this->post('/login', [
+        'email' => 'STAFF@ASSETFLOW.IO',
+        'password' => 'secret123',
+    ]);
+
+    $this->assertAuthenticatedAs($user);
+    $response->assertRedirect(route('dashboard'));
+});
+
+test('users cannot authenticate with non-existent email', function () {
+    $response = $this->from('/login')->post('/login', [
+        'email' => 'nonexistent@assetflow.io',
+        'password' => 'secret123',
+    ]);
+
+    $this->assertGuest();
+    $response->assertSessionHasErrors([
+        'email' => __('Email atau kata sandi yang Anda masukkan salah.'),
+    ]);
+});
+
+test('users cannot authenticate with invalid password', function () {
+    User::factory()->create([
         'email' => 'staff@assetflow.io',
         'password' => 'secret123',
         'is_active' => true,
@@ -40,14 +108,15 @@ test('users cannot authenticate with invalid password', function () {
     ]);
 
     $this->assertGuest();
-    $response->assertSessionHasErrors('email');
+    $response->assertSessionHasErrors([
+        'email' => __('Email atau kata sandi yang Anda masukkan salah.'),
+    ]);
 });
 
 test('inactive users cannot authenticate', function () {
-    $user = User::factory()->create([
+    User::factory()->inactive()->create([
         'email' => 'inactive@assetflow.io',
         'password' => 'secret123',
-        'is_active' => false,
         'registration_status' => 'approved',
     ]);
 
@@ -57,15 +126,16 @@ test('inactive users cannot authenticate', function () {
     ]);
 
     $this->assertGuest();
-    $response->assertSessionHasErrors('email');
+    $response->assertSessionHasErrors([
+        'email' => __('Akun Anda telah dinonaktifkan. Silakan hubungi Administrator IT.'),
+    ]);
 });
 
 test('pending registration users cannot authenticate', function () {
-    $user = User::factory()->create([
+    User::factory()->pendingRegistration()->create([
         'email' => 'pending@assetflow.io',
         'password' => 'secret123',
         'is_active' => true,
-        'registration_status' => 'pending',
     ]);
 
     $response = $this->from('/login')->post('/login', [
@@ -74,15 +144,16 @@ test('pending registration users cannot authenticate', function () {
     ]);
 
     $this->assertGuest();
-    $response->assertSessionHasErrors('email');
+    $response->assertSessionHasErrors([
+        'email' => __('Pendaftaran akun Anda masih menunggu persetujuan dari Super Admin.'),
+    ]);
 });
 
 test('rejected registration users cannot authenticate', function () {
-    $user = User::factory()->create([
+    User::factory()->rejectedRegistration()->create([
         'email' => 'rejected@assetflow.io',
         'password' => 'secret123',
         'is_active' => true,
-        'registration_status' => 'rejected',
     ]);
 
     $response = $this->from('/login')->post('/login', [
@@ -91,15 +162,68 @@ test('rejected registration users cannot authenticate', function () {
     ]);
 
     $this->assertGuest();
-    $response->assertSessionHasErrors('email');
+    $response->assertSessionHasErrors([
+        'email' => __('Pendaftaran akun Anda ditolak. Silakan hubungi Administrator IT.'),
+    ]);
 });
 
-test('authenticated users are redirected from login screen', function () {
-    $user = User::factory()->create();
+test('users can authenticate with remember me enabled', function () {
+    $user = User::factory()->create([
+        'email' => 'staff@assetflow.io',
+        'password' => 'secret123',
+        'is_active' => true,
+        'registration_status' => 'approved',
+    ]);
 
-    $response = $this->actingAs($user)->get('/login');
+    $response = $this->post('/login', [
+        'email' => 'staff@assetflow.io',
+        'password' => 'secret123',
+        'remember' => true,
+    ]);
 
+    $this->assertAuthenticatedAs($user);
     $response->assertRedirect(route('dashboard'));
+    $response->assertCookie(Auth::guard('web')->getRecallerName());
+});
+
+test('users can authenticate without remember me enabled', function () {
+    $user = User::factory()->create([
+        'email' => 'staff@assetflow.io',
+        'password' => 'secret123',
+        'is_active' => true,
+        'registration_status' => 'approved',
+    ]);
+
+    $response = $this->post('/login', [
+        'email' => 'staff@assetflow.io',
+        'password' => 'secret123',
+        'remember' => false,
+    ]);
+
+    $this->assertAuthenticatedAs($user);
+    $response->assertRedirect(route('dashboard'));
+    $response->assertCookieMissing(Auth::guard('web')->getRecallerName());
+});
+
+test('users are redirected to intended url after successful authentication', function () {
+    $user = User::factory()->create([
+        'email' => 'staff@assetflow.io',
+        'password' => 'secret123',
+        'is_active' => true,
+        'registration_status' => 'approved',
+    ]);
+
+    // Guest tries to access protected page first
+    $this->get('/dashboard')->assertRedirect('/login');
+
+    // Guest authenticates via login
+    $response = $this->post('/login', [
+        'email' => 'staff@assetflow.io',
+        'password' => 'secret123',
+    ]);
+
+    $this->assertAuthenticatedAs($user);
+    $response->assertRedirect('/dashboard');
 });
 
 test('users can logout', function () {
