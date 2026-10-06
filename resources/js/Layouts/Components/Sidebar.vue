@@ -26,6 +26,7 @@ import {
     Users,
     MapPin,
     SlidersHorizontal,
+    UserCheck,
     X,
 } from 'lucide-vue-next';
 
@@ -204,6 +205,7 @@ const canAccessAdmin = computed(() => {
                     :icon="Settings"
                     :collapsed="collapsed"
                     :children="[
+                        { label: 'Persetujuan Registrasi', href: '/settings/user-registrations', icon: UserCheck },
                         { label: 'Manajemen Pengguna', href: '/settings/users', icon: Users },
                         { label: 'Departemen & Lokasi', href: '/settings/departments', icon: MapPin },
                         { label: 'Pengaturan Sistem', href: '/settings/system', icon: SlidersHorizontal },

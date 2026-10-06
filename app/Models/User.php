@@ -65,5 +65,13 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Department::class);
     }
+
+    /**
+     * Scope a query to only include users with pending registration.
+     */
+    public function scopePendingRegistration($query)
+    {
+        return $query->where('registration_status', 'pending');
+    }
 }
 

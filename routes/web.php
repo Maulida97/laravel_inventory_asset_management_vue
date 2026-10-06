@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\UserRegistrationApprovalController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -25,4 +26,10 @@ Route::middleware(['auth', 'active'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index']);
 
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+
+    Route::prefix('settings')->name('admin.')->group(function () {
+        Route::get('/user-registrations', [UserRegistrationApprovalController::class, 'index'])->name('user-registrations.index');
+        Route::post('/user-registrations/{user}/approve', [UserRegistrationApprovalController::class, 'approve'])->name('user-registrations.approve');
+        Route::post('/user-registrations/{user}/reject', [UserRegistrationApprovalController::class, 'reject'])->name('user-registrations.reject');
+    });
 });
