@@ -287,7 +287,7 @@ test('users receive warning message on the 4th failed login attempt', function (
     expect(session('errors')->first('email'))->toContain('dikunci selama 15 menit');
 });
 
-test('users are locked out on the 6th consecutive failed login attempt for 15 minutes', function () {
+test('users are locked out on the 5th consecutive failed login attempt for 15 minutes', function () {
     User::factory()->create([
         'email' => 'lockedout@assetflow.io',
         'password' => 'secret123',
@@ -295,24 +295,34 @@ test('users are locked out on the 6th consecutive failed login attempt for 15 mi
         'registration_status' => 'approved',
     ]);
 
-    // 5 failed attempts
-    for ($i = 1; $i <= 5; $i++) {
+    // 4 failed attempts
+    for ($i = 1; $i <= 4; $i++) {
         $this->from('/login')->post('/login', [
             'email' => 'lockedout@assetflow.io',
             'password' => 'wrong-password',
         ]);
     }
 
-    // 6th attempt should be locked out
+    // 5th attempt should immediately trigger lockout
     $response = $this->from('/login')->post('/login', [
         'email' => 'lockedout@assetflow.io',
-        'password' => 'secret123', // even with correct password!
+        'password' => 'wrong-password',
     ]);
 
     $this->assertGuest();
     $response->assertSessionHasErrors('email');
     expect(session('errors')->first('email'))->toContain('Terlalu banyak percobaan login');
     expect(session('errors')->first('email'))->toContain('dikunci sementara');
+
+    // 6th attempt (even with correct password) is blocked by ensureIsNotRateLimited
+    $responseBlocked = $this->from('/login')->post('/login', [
+        'email' => 'lockedout@assetflow.io',
+        'password' => 'secret123',
+    ]);
+
+    $this->assertGuest();
+    $responseBlocked->assertSessionHasErrors('email');
+    expect(session('errors')->first('email'))->toContain('Terlalu banyak percobaan login');
 });
 
 test('lockout event is dispatched when login rate limit is exceeded', function () {
@@ -325,8 +335,8 @@ test('lockout event is dispatched when login rate limit is exceeded', function (
         'registration_status' => 'approved',
     ]);
 
-    // 5 failed attempts
-    for ($i = 1; $i <= 5; $i++) {
+    // 4 failed attempts
+    for ($i = 1; $i <= 4; $i++) {
         $this->from('/login')->post('/login', [
             'email' => 'eventlockout@assetflow.io',
             'password' => 'wrong-password',
@@ -335,7 +345,7 @@ test('lockout event is dispatched when login rate limit is exceeded', function (
 
     Event::assertNotDispatched(Lockout::class);
 
-    // 6th attempt triggers lockout event
+    // 5th attempt triggers lockout event
     $this->from('/login')->post('/login', [
         'email' => 'eventlockout@assetflow.io',
         'password' => 'wrong-password',

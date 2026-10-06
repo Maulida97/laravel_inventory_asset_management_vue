@@ -51,12 +51,26 @@ class LoginRequest extends FormRequest
 
         // Cek kecocokan password hash via Hash::check
         if (! $user || ! Hash::check($password, $user->password)) {
-            RateLimiter::hit($this->throttleKey(), 900); // Kunci 15 menit (900 detik) jika batas tercapai.
-            $attempts = RateLimiter::attempts($this->throttleKey());
+            $attempts = RateLimiter::hit($this->throttleKey(), 900); // Kunci 15 menit (900 detik) jika batas tercapai.
 
             if ($attempts === 4) {
                 throw ValidationException::withMessages([
                     'email' => __('Email atau kata sandi salah (Percobaan ke-4 dari 5). Peringatan: Akun Anda akan dikunci selama 15 menit jika gagal 1 kali lagi.'),
+                ]);
+            }
+
+            if ($attempts >= 5) {
+                event(new Lockout($this));
+
+                $seconds = RateLimiter::availableIn($this->throttleKey());
+                $minutes = floor($seconds / 60);
+                $remainingSeconds = $seconds % 60;
+                $timeFormatted = sprintf('%02d:%02d', $minutes, $remainingSeconds);
+
+                throw ValidationException::withMessages([
+                    'email' => __('Terlalu banyak percobaan login. Akun Anda dikunci sementara. Silakan coba lagi dalam :time.', [
+                        'time' => $timeFormatted,
+                    ]),
                 ]);
             }
 
@@ -102,12 +116,13 @@ class LoginRequest extends FormRequest
         event(new Lockout($this));
 
         $seconds = RateLimiter::availableIn($this->throttleKey());
-        $minutes = ceil($seconds / 60);
+        $minutes = floor($seconds / 60);
+        $remainingSeconds = $seconds % 60;
+        $timeFormatted = sprintf('%02d:%02d', $minutes, $remainingSeconds);
 
         throw ValidationException::withMessages([
-            'email' => __('Terlalu banyak percobaan login. Akun Anda dikunci sementara. Silakan coba lagi dalam :minutes menit (:seconds detik).', [
-                'minutes' => $minutes,
-                'seconds' => $seconds,
+            'email' => __('Terlalu banyak percobaan login. Akun Anda dikunci sementara. Silakan coba lagi dalam :time.', [
+                'time' => $timeFormatted,
             ]),
         ]);
     }
