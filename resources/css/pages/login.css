@@ -144,6 +144,20 @@
     line-height: 1.4;
 }
 
+.alert-success-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: var(--radius-md);
+    color: #10b981;
+    font-size: 0.875rem;
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
 .input-error {
     border-color: #ef4444 !important;
 }
