@@ -1,7 +1,10 @@
 <?php
 
 use App\Models\User;
+use Illuminate\Auth\Events\Lockout;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
 
 test('login screen can be rendered for guest', function () {
     $response = $this->get('/login');
@@ -234,3 +237,226 @@ test('users can logout', function () {
     $this->assertGuest();
     $response->assertRedirect(route('login'));
 });
+
+test('users receive standard invalid credentials error for attempts 1 to 3 and 5', function () {
+    User::factory()->create([
+        'email' => 'ratelimit@assetflow.io',
+        'password' => 'secret123',
+        'is_active' => true,
+        'registration_status' => 'approved',
+    ]);
+
+    for ($i = 1; $i <= 3; $i++) {
+        $response = $this->from('/login')->post('/login', [
+            'email' => 'ratelimit@assetflow.io',
+            'password' => 'wrong-password',
+        ]);
+
+        $this->assertGuest();
+        $response->assertSessionHasErrors([
+            'email' => __('Email atau kata sandi yang Anda masukkan salah.'),
+        ]);
+    }
+});
+
+test('users receive warning message on the 4th failed login attempt', function () {
+    User::factory()->create([
+        'email' => 'warning4@assetflow.io',
+        'password' => 'secret123',
+        'is_active' => true,
+        'registration_status' => 'approved',
+    ]);
+
+    // 3 failed attempts
+    for ($i = 1; $i <= 3; $i++) {
+        $this->from('/login')->post('/login', [
+            'email' => 'warning4@assetflow.io',
+            'password' => 'wrong-password',
+        ]);
+    }
+
+    // 4th attempt should return specific warning message
+    $response = $this->from('/login')->post('/login', [
+        'email' => 'warning4@assetflow.io',
+        'password' => 'wrong-password',
+    ]);
+
+    $this->assertGuest();
+    $response->assertSessionHasErrors('email');
+    expect(session('errors')->first('email'))->toContain('Percobaan ke-4 dari 5');
+    expect(session('errors')->first('email'))->toContain('dikunci selama 15 menit');
+});
+
+test('users are locked out on the 6th consecutive failed login attempt for 15 minutes', function () {
+    User::factory()->create([
+        'email' => 'lockedout@assetflow.io',
+        'password' => 'secret123',
+        'is_active' => true,
+        'registration_status' => 'approved',
+    ]);
+
+    // 5 failed attempts
+    for ($i = 1; $i <= 5; $i++) {
+        $this->from('/login')->post('/login', [
+            'email' => 'lockedout@assetflow.io',
+            'password' => 'wrong-password',
+        ]);
+    }
+
+    // 6th attempt should be locked out
+    $response = $this->from('/login')->post('/login', [
+        'email' => 'lockedout@assetflow.io',
+        'password' => 'secret123', // even with correct password!
+    ]);
+
+    $this->assertGuest();
+    $response->assertSessionHasErrors('email');
+    expect(session('errors')->first('email'))->toContain('Terlalu banyak percobaan login');
+    expect(session('errors')->first('email'))->toContain('dikunci sementara');
+});
+
+test('lockout event is dispatched when login rate limit is exceeded', function () {
+    Event::fake([Lockout::class]);
+
+    User::factory()->create([
+        'email' => 'eventlockout@assetflow.io',
+        'password' => 'secret123',
+        'is_active' => true,
+        'registration_status' => 'approved',
+    ]);
+
+    // 5 failed attempts
+    for ($i = 1; $i <= 5; $i++) {
+        $this->from('/login')->post('/login', [
+            'email' => 'eventlockout@assetflow.io',
+            'password' => 'wrong-password',
+        ]);
+    }
+
+    Event::assertNotDispatched(Lockout::class);
+
+    // 6th attempt triggers lockout event
+    $this->from('/login')->post('/login', [
+        'email' => 'eventlockout@assetflow.io',
+        'password' => 'wrong-password',
+    ]);
+
+    Event::assertDispatched(Lockout::class);
+});
+
+test('successful login clears the failed attempts rate limiter counter', function () {
+    User::factory()->create([
+        'email' => 'clearlimit@assetflow.io',
+        'password' => 'secret123',
+        'is_active' => true,
+        'registration_status' => 'approved',
+    ]);
+
+    // 3 failed attempts
+    for ($i = 1; $i <= 3; $i++) {
+        $this->from('/login')->post('/login', [
+            'email' => 'clearlimit@assetflow.io',
+            'password' => 'wrong-password',
+        ]);
+    }
+
+    // Successful attempt
+    $successResponse = $this->post('/login', [
+        'email' => 'clearlimit@assetflow.io',
+        'password' => 'secret123',
+    ]);
+
+    $successResponse->assertRedirect(route('dashboard'));
+
+    // Logout
+    $this->post('/logout');
+
+    // Should be able to fail another 5 times without immediate lockout
+    for ($i = 1; $i <= 5; $i++) {
+        $response = $this->from('/login')->post('/login', [
+            'email' => 'clearlimit@assetflow.io',
+            'password' => 'wrong-password',
+        ]);
+
+        $response->assertSessionHasErrors('email');
+        if ($i === 4) {
+            expect(session('errors')->first('email'))->toContain('Percobaan ke-4 dari 5');
+        }
+    }
+});
+
+test('rate limiting throttle key is case-insensitive for email', function () {
+    User::factory()->create([
+        'email' => 'caseinsensitive@assetflow.io',
+        'password' => 'secret123',
+        'is_active' => true,
+        'registration_status' => 'approved',
+    ]);
+
+    // 5 failed attempts with varying case
+    $emails = [
+        'caseinsensitive@assetflow.io',
+        'CASEINSENSITIVE@ASSETFLOW.IO',
+        'CaseInsensitive@AssetFlow.io',
+        'caseINSENSITIVE@assetflow.IO',
+        'CASEinsensitive@ASSETFLOW.io',
+    ];
+
+    foreach ($emails as $email) {
+        $this->from('/login')->post('/login', [
+            'email' => $email,
+            'password' => 'wrong-password',
+        ]);
+    }
+
+    // 6th attempt with lowercase should be locked out
+    $response = $this->from('/login')->post('/login', [
+        'email' => 'caseinsensitive@assetflow.io',
+        'password' => 'wrong-password',
+    ]);
+
+    $this->assertGuest();
+    $response->assertSessionHasErrors('email');
+    expect(session('errors')->first('email'))->toContain('Terlalu banyak percobaan login');
+});
+
+test('rate limiting is isolated per email and ip address', function () {
+    User::factory()->create([
+        'email' => 'user_one@assetflow.io',
+        'password' => 'secret123',
+        'is_active' => true,
+        'registration_status' => 'approved',
+    ]);
+    User::factory()->create([
+        'email' => 'user_two@assetflow.io',
+        'password' => 'secret123',
+        'is_active' => true,
+        'registration_status' => 'approved',
+    ]);
+
+    // Lock out user_one with 5 failed attempts
+    for ($i = 1; $i <= 5; $i++) {
+        $this->from('/login')->post('/login', [
+            'email' => 'user_one@assetflow.io',
+            'password' => 'wrong-password',
+        ]);
+    }
+
+    // user_one 6th attempt is locked out
+    $responseOne = $this->from('/login')->post('/login', [
+        'email' => 'user_one@assetflow.io',
+        'password' => 'secret123',
+    ]);
+    $responseOne->assertSessionHasErrors('email');
+    expect(session('errors')->first('email'))->toContain('Terlalu banyak percobaan login');
+
+    // user_two should NOT be locked out and can login successfully
+    $responseTwo = $this->post('/login', [
+        'email' => 'user_two@assetflow.io',
+        'password' => 'secret123',
+    ]);
+    $responseTwo->assertRedirect(route('dashboard'));
+    $this->assertAuthenticatedAs(User::where('email', 'user_two@assetflow.io')->first());
+});
+
+

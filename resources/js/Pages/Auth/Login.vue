@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { useTheme } from '../../Composables/useTheme';
 
@@ -27,6 +27,12 @@ const showPassword = ref(false);
 const togglePasswordVisibility = () => {
     showPassword.value = !showPassword.value;
 };
+
+const isLockedOut = computed(() => {
+    if (!form.errors.email) return false;
+    const msg = form.errors.email.toLowerCase();
+    return msg.includes('dikunci sementara') || msg.includes('terlalu banyak percobaan');
+});
 
 const handleLogin = () => {
     form.post('/login', {
@@ -169,10 +175,19 @@ const handleLogin = () => {
                     </div>
 
                     <!-- Submit Button -->
-                    <button type="submit" class="btn-submit" :disabled="form.processing">
-                        <span>{{ form.processing ? 'Memproses...' : 'Masuk ke Dashboard' }}</span>
-                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <button 
+                        type="submit" 
+                        class="btn-submit" 
+                        :class="{ 'is-locked': isLockedOut }"
+                        :disabled="form.processing || isLockedOut"
+                    >
+                        <span>{{ form.processing ? 'Memproses...' : (isLockedOut ? 'Akun Terkunci Sementara' : 'Masuk ke Dashboard') }}</span>
+                        <svg v-if="!isLockedOut" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                        </svg>
+                        <svg v-else width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                         </svg>
                     </button>
                 </form>
