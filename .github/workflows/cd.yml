@@ -103,4 +103,5 @@ jobs:
               docker compose exec -T app composer install --no-dev --optimize-autoloader
               docker compose exec -T app php artisan optimize
               docker compose exec -T app php artisan migrate --force
+              docker compose exec -T app php artisan db:seed --force
             "
