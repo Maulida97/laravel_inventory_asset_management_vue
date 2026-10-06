@@ -193,7 +193,7 @@ const handleLogin = () => {
 
             <!-- Footer -->
             <div class="login-footer">
-                Belum memiliki akun? <a href="#">Hubungi Administrator IT</a>
+                Belum memiliki akun? <Link href="/register">Daftar di sini</Link>
             </div>
         </div>
     </div>
