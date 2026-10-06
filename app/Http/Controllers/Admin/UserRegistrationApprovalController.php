@@ -4,11 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ApproveUserRegistrationRequest;
+use App\Http\Requests\Admin\RejectUserRegistrationRequest;
 use App\Models\Department;
 use App\Models\User;
+use App\Services\Admin\UserRegistrationApprovalService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 use Spatie\Permission\Models\Role;
@@ -60,22 +61,18 @@ class UserRegistrationApprovalController extends Controller
     /**
      * Approve a pending user registration and assign roles.
      */
-    public function approve(ApproveUserRegistrationRequest $request, User $user): RedirectResponse
-    {
+    public function approve(
+        ApproveUserRegistrationRequest $request,
+        User $user,
+        UserRegistrationApprovalService $approvalService
+    ): RedirectResponse {
         if ($user->registration_status !== 'pending') {
             return back()->withErrors([
                 'error' => __('Pendaftaran pengguna ini sudah diproses sebelumnya.'),
             ]);
         }
 
-        DB::transaction(function () use ($request, $user) {
-            $user->update([
-                'registration_status' => 'approved',
-                'is_active' => true,
-            ]);
-
-            $user->syncRoles($request->validated('roles'));
-        });
+        $approvalService->approve($user, $request->validated('roles'));
 
         return redirect()->route('admin.user-registrations.index')->with(
             'status',
@@ -86,24 +83,18 @@ class UserRegistrationApprovalController extends Controller
     /**
      * Reject a pending user registration.
      */
-    public function reject(Request $request, User $user): RedirectResponse
-    {
-        $this->authorizeAdmin($request->user());
-
+    public function reject(
+        RejectUserRegistrationRequest $request,
+        User $user,
+        UserRegistrationApprovalService $approvalService
+    ): RedirectResponse {
         if ($user->registration_status !== 'pending') {
             return back()->withErrors([
                 'error' => __('Pendaftaran pengguna ini sudah diproses sebelumnya.'),
             ]);
         }
 
-        DB::transaction(function () use ($user) {
-            $user->update([
-                'registration_status' => 'rejected',
-                'is_active' => false,
-            ]);
-
-            $user->syncRoles([]);
-        });
+        $approvalService->reject($user);
 
         return redirect()->route('admin.user-registrations.index')->with(
             'status',
