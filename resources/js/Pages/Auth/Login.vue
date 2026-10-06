@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { useTheme } from '../../Composables/useTheme';
 
@@ -12,10 +12,6 @@ const props = defineProps({
 
 const { theme, toggleTheme, initTheme } = useTheme();
 
-onMounted(() => {
-    initTheme();
-});
-
 const form = useForm({
     email: '',
     password: '',
@@ -23,10 +19,123 @@ const form = useForm({
 });
 
 const showPassword = ref(false);
+const countdownSeconds = ref(0);
+let countdownInterval = null;
 
 const togglePasswordVisibility = () => {
     showPassword.value = !showPassword.value;
 };
+
+const isLockedOut = computed(() => {
+    if (!form.errors.email) return false;
+    const msg = form.errors.email.toLowerCase();
+    return msg.includes('dikunci sementara') || msg.includes('terlalu banyak percobaan');
+});
+
+const STORAGE_LOCKOUT_KEY = 'inventra_login_lockout_until';
+const STORAGE_EMAIL_KEY = 'inventra_login_locked_email';
+
+const startCountdown = (totalSeconds) => {
+    if (countdownInterval) clearInterval(countdownInterval);
+    countdownSeconds.value = totalSeconds;
+
+    const expiryTimestamp = Date.now() + totalSeconds * 1000;
+    try {
+        localStorage.setItem(STORAGE_LOCKOUT_KEY, expiryTimestamp.toString());
+        if (form.email) {
+            localStorage.setItem(STORAGE_EMAIL_KEY, form.email);
+        }
+    } catch (e) {
+        // Fallback silently if storage unavailable
+    }
+
+    countdownInterval = setInterval(() => {
+        if (countdownSeconds.value > 1) {
+            countdownSeconds.value--;
+        } else {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+            countdownSeconds.value = 0;
+            try {
+                localStorage.removeItem(STORAGE_LOCKOUT_KEY);
+                localStorage.removeItem(STORAGE_EMAIL_KEY);
+            } catch (e) {}
+
+            if (isLockedOut.value) {
+                form.clearErrors('email');
+            }
+        }
+    }, 1000);
+};
+
+const checkPersistentLockout = () => {
+    try {
+        const savedExpiry = localStorage.getItem(STORAGE_LOCKOUT_KEY);
+        if (savedExpiry) {
+            const expiryTime = parseInt(savedExpiry, 10);
+            const now = Date.now();
+            if (expiryTime > now) {
+                const remainingSecs = Math.ceil((expiryTime - now) / 1000);
+                const savedEmail = localStorage.getItem(STORAGE_EMAIL_KEY);
+                if (savedEmail && !form.email) {
+                    form.email = savedEmail;
+                }
+                const mins = Math.floor(remainingSecs / 60);
+                const secs = remainingSecs % 60;
+                const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                form.setError('email', `Terlalu banyak percobaan login. Akun Anda dikunci sementara. Silakan coba lagi dalam ${formatted}.`);
+                startCountdown(remainingSecs);
+            } else {
+                localStorage.removeItem(STORAGE_LOCKOUT_KEY);
+                localStorage.removeItem(STORAGE_EMAIL_KEY);
+            }
+        }
+    } catch (e) {}
+};
+
+onMounted(() => {
+    initTheme();
+    checkPersistentLockout();
+});
+
+const formattedTimeRemaining = computed(() => {
+    const mins = Math.floor(countdownSeconds.value / 60);
+    const secs = countdownSeconds.value % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+});
+
+const displayedEmailError = computed(() => {
+    if (!form.errors.email) return null;
+    if (countdownSeconds.value > 0 && isLockedOut.value) {
+        return form.errors.email.replace(/\d{1,2}:\d{2}/, formattedTimeRemaining.value);
+    }
+    return form.errors.email;
+});
+
+watch(
+    () => form.errors.email,
+    (newError) => {
+        if (newError) {
+            const match = newError.match(/(\d{1,2}):(\d{2})/);
+            if (match) {
+                const mins = parseInt(match[1], 10);
+                const secs = parseInt(match[2], 10);
+                startCountdown(mins * 60 + secs);
+            }
+        } else {
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+                countdownSeconds.value = 0;
+            }
+        }
+    },
+    { immediate: true }
+);
+
+onUnmounted(() => {
+    if (countdownInterval) clearInterval(countdownInterval);
+});
 
 const handleLogin = () => {
     form.post('/login', {
@@ -90,7 +199,7 @@ const handleLogin = () => {
                     <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
                     </svg>
-                    <span>{{ form.errors.email }}</span>
+                    <span>{{ displayedEmailError }}</span>
                 </div>
 
                 <form @submit.prevent="handleLogin">
@@ -169,10 +278,19 @@ const handleLogin = () => {
                     </div>
 
                     <!-- Submit Button -->
-                    <button type="submit" class="btn-submit" :disabled="form.processing">
-                        <span>{{ form.processing ? 'Memproses...' : 'Masuk ke Dashboard' }}</span>
-                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <button 
+                        type="submit" 
+                        class="btn-submit" 
+                        :class="{ 'is-locked': isLockedOut }"
+                        :disabled="form.processing || isLockedOut"
+                    >
+                        <span>{{ form.processing ? 'Memproses...' : (isLockedOut ? 'Akun Terkunci Sementara' : 'Masuk ke Dashboard') }}</span>
+                        <svg v-if="!isLockedOut" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                             <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                        </svg>
+                        <svg v-else width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
                         </svg>
                     </button>
                 </form>

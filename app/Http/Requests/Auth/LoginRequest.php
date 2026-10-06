@@ -3,9 +3,11 @@
 namespace App\Http\Requests\Auth;
 
 use App\Models\User;
+use Illuminate\Auth\Events\Lockout;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -40,13 +42,38 @@ class LoginRequest extends FormRequest
      */
     public function authenticate(): void
     {
-        $email = Str::lower($this->input('email')); //Normalisasi email ke lowercase.
+        $this->ensureIsNotRateLimited();
+
+        $email = Str::lower($this->input('email')); // Normalisasi email ke lowercase.
         $password = (string) $this->input('password');
 
-        $user = User::where('email', $email)->first(); //Mencari user berdasarkan email.
+        $user = User::where('email', $email)->first(); // Mencari user berdasarkan email.
 
-        //Cek kecocokan password hash via Hash::check
-        if (! $user || ! Hash::check($password, $user->password)) { //Memeriksa apakah user ada dan password benar.
+        // Cek kecocokan password hash via Hash::check
+        if (! $user || ! Hash::check($password, $user->password)) {
+            $attempts = RateLimiter::hit($this->throttleKey(), 900); // Kunci 15 menit (900 detik) jika batas tercapai.
+
+            if ($attempts === 4) {
+                throw ValidationException::withMessages([
+                    'email' => __('Email atau kata sandi salah (Percobaan ke-4 dari 5). Peringatan: Akun Anda akan dikunci selama 15 menit jika gagal 1 kali lagi.'),
+                ]);
+            }
+
+            if ($attempts >= 5) {
+                event(new Lockout($this));
+
+                $seconds = RateLimiter::availableIn($this->throttleKey());
+                $minutes = floor($seconds / 60);
+                $remainingSeconds = $seconds % 60;
+                $timeFormatted = sprintf('%02d:%02d', $minutes, $remainingSeconds);
+
+                throw ValidationException::withMessages([
+                    'email' => __('Terlalu banyak percobaan login. Akun Anda dikunci sementara. Silakan coba lagi dalam :time.', [
+                        'time' => $timeFormatted,
+                    ]),
+                ]);
+            }
+
             throw ValidationException::withMessages([
                 'email' => __('Email atau kata sandi yang Anda masukkan salah.'),
             ]);
@@ -70,6 +97,41 @@ class LoginRequest extends FormRequest
             ]);
         }
 
+        RateLimiter::clear($this->throttleKey());
+
         Auth::login($user, $this->boolean('remember'));
+    }
+
+    /**
+     * Ensure the login request is not rate limited.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function ensureIsNotRateLimited(): void
+    {
+        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+            return;
+        }
+
+        event(new Lockout($this));
+
+        $seconds = RateLimiter::availableIn($this->throttleKey());
+        $minutes = floor($seconds / 60);
+        $remainingSeconds = $seconds % 60;
+        $timeFormatted = sprintf('%02d:%02d', $minutes, $remainingSeconds);
+
+        throw ValidationException::withMessages([
+            'email' => __('Terlalu banyak percobaan login. Akun Anda dikunci sementara. Silakan coba lagi dalam :time.', [
+                'time' => $timeFormatted,
+            ]),
+        ]);
+    }
+
+    /**
+     * Get the rate limiting throttle key for the request.
+     */
+    public function throttleKey(): string
+    {
+        return Str::transliterate(Str::lower($this->input('email')) . '|' . $this->ip());
     }
 }
