@@ -2,7 +2,9 @@
 
 use App\Models\Department;
 use App\Models\User;
+use App\Notifications\NewUserRegistrationNotification;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Notification;
 
 test('registration screen can be rendered for guest with active departments', function () {
     $activeDept = Department::factory()->create(['is_active' => true, 'name' => 'IT Department']);
@@ -167,4 +169,118 @@ test('newly registered user cannot log in while registration status is pending',
 
     $this->assertGuest();
     $response->assertSessionHasErrors('email');
+});
+
+test('it sends NewUserRegistrationNotification to active Super Admins upon successful registration', function () {
+    Notification::fake();
+
+    \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
+    \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Staff', 'guard_name' => 'web']);
+
+    $superAdmin = User::factory()->create([
+        'email' => 'superadmin@assetflow.io',
+        'is_active' => true,
+    ]);
+    $superAdmin->assignRole('Super Admin');
+
+    $inactiveSuperAdmin = User::factory()->create([
+        'email' => 'inactive.superadmin@assetflow.io',
+        'is_active' => false,
+    ]);
+    $inactiveSuperAdmin->assignRole('Super Admin');
+
+    $regularUser = User::factory()->create([
+        'email' => 'staff@assetflow.io',
+        'is_active' => true,
+    ]);
+    $regularUser->assignRole('Staff');
+
+    $dept = Department::factory()->create(['is_active' => true, 'name' => 'Finance']);
+
+    $response = $this->post('/register', [
+        'name' => 'Alice Wonder',
+        'email' => 'alice@company.com',
+        'employee_id' => 'EMP-777',
+        'department_id' => $dept->id,
+        'position' => 'Finance Analyst',
+        'phone_number' => '081122334455',
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+    ]);
+
+    $response->assertRedirect(route('login'));
+
+    Notification::assertSentTo(
+        [$superAdmin],
+        NewUserRegistrationNotification::class,
+        function (NewUserRegistrationNotification $notification, array $channels) use ($dept) {
+            $mailData = $notification->toArray($notification->newUser);
+            return in_array('mail', $channels)
+                && $notification->newUser->email === 'alice@company.com'
+                && $notification->newUser->name === 'Alice Wonder'
+                && $mailData['employee_id'] === 'EMP-777'
+                && $mailData['department_name'] === 'Finance';
+        }
+    );
+
+    Notification::assertNotSentTo([$inactiveSuperAdmin], NewUserRegistrationNotification::class);
+    Notification::assertNotSentTo([$regularUser], NewUserRegistrationNotification::class);
+});
+
+test('it does not send notification when registration validation fails', function () {
+    Notification::fake();
+
+    \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
+
+    $superAdmin = User::factory()->create(['is_active' => true]);
+    $superAdmin->assignRole('Super Admin');
+
+    $this->from('/register')->post('/register', [
+        'name' => '',
+        'email' => 'invalid-email',
+        'department_id' => '',
+        'password' => 'short',
+        'password_confirmation' => 'mismatch',
+    ]);
+
+    Notification::assertNothingSent();
+});
+
+test('registration succeeds gracefully without errors when no active Super Admin exists', function () {
+    Notification::fake();
+
+    $dept = Department::factory()->create(['is_active' => true]);
+
+    $response = $this->post('/register', [
+        'name' => 'Solo User',
+        'email' => 'solo@company.com',
+        'department_id' => $dept->id,
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+    ]);
+
+    $response->assertRedirect(route('login'));
+    $this->assertDatabaseHas('users', ['email' => 'solo@company.com']);
+    Notification::assertNothingSent();
+});
+
+test('NewUserRegistrationNotification renders mail message with review action URL and recipient', function () {
+    $dept = Department::factory()->create(['name' => 'Technology']);
+    $newUser = User::factory()->create([
+        'name' => 'John Developer',
+        'email' => 'john.dev@company.com',
+        'employee_id' => 'EMP-0099',
+        'position' => 'Fullstack Dev',
+        'department_id' => $dept->id,
+    ]);
+
+    $admin = User::factory()->create(['name' => 'Super Admin Boss']);
+
+    $notification = new NewUserRegistrationNotification($newUser);
+    $mailMessage = $notification->toMail($admin);
+
+    expect($mailMessage->viewData['admin']->name)->toBe('Super Admin Boss');
+    expect($mailMessage->viewData['newUser']->name)->toBe('John Developer');
+    expect($mailMessage->viewData['reviewUrl'])->toBe(route('admin.user-registrations.index'));
+    expect($mailMessage->subject)->toContain('Pendaftaran Akun Baru Menunggu Persetujuan');
 });
