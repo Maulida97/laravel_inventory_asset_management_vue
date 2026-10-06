@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Models\Department;
 use App\Models\User;
+use App\Notifications\NewUserRegistrationNotification;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -33,8 +35,8 @@ class RegisteredUserController extends Controller
      */
     public function store(RegisterRequest $request): RedirectResponse
     {
-        DB::transaction(function () use ($request) {
-            User::create([
+        $user = DB::transaction(function () use ($request) {
+            return User::create([
                 'name' => $request->validated('name'),
                 'email' => $request->validated('email'),
                 'password' => $request->validated('password'),
@@ -46,6 +48,16 @@ class RegisteredUserController extends Controller
                 'registration_status' => 'pending',
             ]);
         });
+
+        $user->loadMissing('department');
+
+        $superAdmins = User::whereHas('roles', function ($query) {
+            $query->where('name', 'Super Admin');
+        })->where('is_active', true)->get();
+
+        if ($superAdmins->isNotEmpty()) {
+            Notification::send($superAdmins, new NewUserRegistrationNotification($user));
+        }
 
         return redirect()->route('login')->with(
             'status',
