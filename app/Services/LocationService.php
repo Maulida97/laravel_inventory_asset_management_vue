@@ -52,7 +52,12 @@ class LocationService
             $query->where('parent_id', $filters['parent_id']);
         }
 
-        return $query->orderBy('name')->paginate($perPage)->withQueryString();
+        return $query
+            ->orderByRaw('COALESCE(parent_id, id) ASC')
+            ->orderByRaw('CASE WHEN parent_id IS NULL THEN 0 ELSE 1 END ASC')
+            ->orderBy('name', 'asc')
+            ->paginate($perPage)
+            ->withQueryString();
     }
 
     /**

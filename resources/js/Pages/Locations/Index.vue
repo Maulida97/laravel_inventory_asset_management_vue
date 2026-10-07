@@ -73,6 +73,7 @@ const search = ref(props.filters.search || '');
 const typeFilter = ref(props.filters.type || '');
 const levelFilter = ref(props.filters.level || '');
 const statusFilter = ref(props.filters.is_active !== undefined && props.filters.is_active !== null ? String(props.filters.is_active) : '');
+const perPage = ref(props.filters.per_page ? String(props.filters.per_page) : '10');
 
 const applyFilters = () => {
     router.get(
@@ -82,6 +83,7 @@ const applyFilters = () => {
             type: typeFilter.value || undefined,
             level: levelFilter.value || undefined,
             is_active: statusFilter.value !== '' ? statusFilter.value : undefined,
+            per_page: perPage.value !== '10' ? perPage.value : undefined,
         },
         {
             preserveState: true,
@@ -98,7 +100,7 @@ watch(search, () => {
     }, 350);
 });
 
-watch([typeFilter, levelFilter, statusFilter], () => {
+watch([typeFilter, levelFilter, statusFilter, perPage], () => {
     applyFilters();
 });
 
@@ -107,6 +109,7 @@ const resetFilters = () => {
     typeFilter.value = '';
     levelFilter.value = '';
     statusFilter.value = '';
+    perPage.value = '10';
     router.get('/locations', {}, { preserveState: true, replace: true });
 };
 
@@ -384,6 +387,14 @@ const formatTypeName = (type) => {
                         <option value="false">Nonaktif</option>
                     </select>
 
+                    <!-- Per Page Filter -->
+                    <select v-model="perPage" class="locations-select-field" title="Jumlah data per halaman">
+                        <option value="5">5 per halaman</option>
+                        <option value="10">10 per halaman</option>
+                        <option value="20">20 per halaman</option>
+                        <option value="50">50 per halaman</option>
+                    </select>
+
                     <!-- Reset Filter Button -->
                     <button
                         type="button"
@@ -416,14 +427,14 @@ const formatTypeName = (type) => {
                                 <tr
                                     v-for="loc in locations.data"
                                     :key="loc.id"
-                                    :class="{ 'is-child-row': loc.parent_id }"
+                                    :class="loc.parent_id ? 'is-child-row' : 'is-parent-row'"
                                 >
                                     <!-- Name & Code -->
                                     <td>
-                                        <div class="loc-identity-cell">
+                                        <div class="loc-identity-cell" :class="{ 'nested-child': loc.parent_id }">
                                             <div
                                                 v-if="loc.parent_id"
-                                                class="loc-child-indent"
+                                                class="loc-child-tree-guide"
                                                 title="Sub-lokasi"
                                             >
                                                 <CornerDownRight class="w-4 h-4" />
@@ -470,7 +481,7 @@ const formatTypeName = (type) => {
 
                                     <!-- Parent Link -->
                                     <td>
-                                        <span v-if="loc.parent" class="text-xs text-muted-foreground font-medium">
+                                        <span v-if="loc.parent" class="text-xs font-semibold text-primary">
                                             {{ loc.parent.name }} ({{ loc.parent.code }})
                                         </span>
                                         <span v-else class="text-xs text-muted-foreground opacity-60">
@@ -557,12 +568,21 @@ const formatTypeName = (type) => {
                 </div>
 
                 <!-- Pagination Footer -->
-                <div v-if="locations.links && locations.links.length > 3" class="locations-pagination-container">
+                <div class="locations-pagination-container">
                     <div class="pagination-meta-info">
-                        Menampilkan <strong>{{ locations.from || 0 }}</strong> - <strong>{{ locations.to || 0 }}</strong> dari <strong>{{ locations.total }}</strong> lokasi
+                        <span>Menampilkan <strong>{{ locations.from || 0 }}</strong> - <strong>{{ locations.to || 0 }}</strong> dari <strong>{{ locations.total }}</strong> lokasi</span>
+                        <div class="pagination-per-page-box">
+                            <span class="per-page-label">Per halaman:</span>
+                            <select v-model="perPage" class="locations-select-field compact-select">
+                                <option value="5">5</option>
+                                <option value="10">10</option>
+                                <option value="20">20</option>
+                                <option value="50">50</option>
+                            </select>
+                        </div>
                     </div>
 
-                    <div class="pagination-links-wrap">
+                    <div v-if="locations.links && locations.links.length > 3" class="pagination-links-wrap">
                         <template v-for="(link, idx) in locations.links" :key="idx">
                             <Link
                                 v-if="link.url"

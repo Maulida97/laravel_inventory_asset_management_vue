@@ -21,10 +21,13 @@ class LocationController extends Controller
     {
         Gate::authorize('viewAny', Location::class);
 
-        $locations = $locationService->getPaginatedLocations(
-            $request->only(['search', 'type', 'is_active', 'level', 'parent_id']),
-            10
-        );
+        $perPage = (int) $request->input('per_page', 10);
+        if (! in_array($perPage, [5, 10, 20, 50, 100], true)) {
+            $perPage = 10;
+        }
+
+        $filters = $request->only(['search', 'type', 'is_active', 'level', 'parent_id', 'per_page']);
+        $locations = $locationService->getPaginatedLocations($filters, $perPage);
 
         $parentOptions = $locationService->getActiveParentOptions();
         $statistics = $locationService->getStatistics();
@@ -33,7 +36,7 @@ class LocationController extends Controller
             'locations' => $locations,
             'parentOptions' => $parentOptions,
             'statistics' => $statistics,
-            'filters' => $request->only(['search', 'type', 'is_active', 'level', 'parent_id']),
+            'filters' => array_merge($filters, ['per_page' => $perPage]),
             'status' => session('status'),
             'warning' => session('warning'),
         ]);

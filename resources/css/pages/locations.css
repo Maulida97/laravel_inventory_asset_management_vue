@@ -278,30 +278,44 @@
     transition: background-color var(--transition);
 }
 
-.locations-data-table tbody tr:hover {
-    background-color: var(--bg-hover);
+.locations-data-table tbody tr.is-parent-row {
+    background-color: var(--bg-card);
+    border-top: 1px solid var(--border);
+}
+
+.locations-data-table tbody tr.is-parent-row td {
+    font-weight: 500;
 }
 
 .locations-data-table tbody tr.is-child-row {
-    background-color: rgba(0, 0, 0, 0.015);
+    background-color: rgba(0, 0, 0, 0.02);
 }
 
 [data-theme='dark'] .locations-data-table tbody tr.is-child-row {
-    background-color: rgba(255, 255, 255, 0.015);
+    background-color: rgba(255, 255, 255, 0.02);
+}
+
+.locations-data-table tbody tr.is-child-row:hover {
+    background-color: var(--bg-hover);
 }
 
 /* Location Identity Cell */
 .loc-identity-cell {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
-.loc-child-indent {
+.loc-identity-cell.nested-child {
+    padding-left: 12px;
+}
+
+.loc-child-tree-guide {
     display: inline-flex;
     align-items: center;
-    padding-left: 20px;
-    color: var(--text-tertiary);
+    color: var(--primary);
+    opacity: 0.75;
+    flex-shrink: 0;
 }
 
 .loc-icon-pill {
@@ -528,6 +542,27 @@
 .pagination-meta-info {
     font-size: 0.875rem;
     color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.pagination-per-page-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.per-page-label {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.locations-select-field.compact-select {
+    min-width: 75px;
+    padding: 5px 24px 5px 8px;
+    font-size: 0.8125rem;
 }
 
 .pagination-links-wrap {
