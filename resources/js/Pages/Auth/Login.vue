@@ -2,6 +2,14 @@
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { useTheme } from '../../Composables/useTheme';
+import { 
+    Package, 
+    Building2, 
+    ShieldCheck, 
+    ClipboardCheck, 
+    Code2, 
+    Layers 
+} from 'lucide-vue-next';
 
 const props = defineProps({
     status: {
@@ -137,6 +145,17 @@ onUnmounted(() => {
     if (countdownInterval) clearInterval(countdownInterval);
 });
 
+const isAutoFilled = ref(false);
+
+const fillCredentials = (email, password) => {
+    form.email = email;
+    form.password = password;
+    isAutoFilled.value = true;
+    setTimeout(() => {
+        isAutoFilled.value = false;
+    }, 2500);
+};
+
 const handleLogin = () => {
     form.post('/login', {
         onFinish: () => form.reset('password'),
@@ -166,152 +185,312 @@ const handleLogin = () => {
             <span>{{ theme === 'dark' ? 'Mode Terang' : 'Mode Gelap' }}</span>
         </button>
 
-        <div class="login-container">
-            <!-- Header -->
-            <div class="login-header">
-                <Link href="/" class="login-logo">
-                    <div class="login-logo-icon">
+        <div class="login-layout-grid">
+            <!-- Left Side: Portfolio & Showcase Card -->
+            <div class="portfolio-showcase-card">
+                <!-- Status Strip Bar (Option B: Tanpa Badge, Info On Progress) -->
+                <div class="portfolio-status-strip">
+                    <div class="status-strip-left">
+                        <span class="pulsing-dot pulsing-dot-amber"></span>
+                        <span class="status-strip-title">Pengembangan Aktif</span>
+                        <span class="status-strip-divider">•</span>
+                        <span class="status-strip-highlight">On Progress</span>
+                    </div>
+                    <div class="status-strip-right">
+                        <span>Projek Portofolio</span>
+                    </div>
+                </div>
+
+                <div class="portfolio-brand-row">
+                    <div class="portfolio-logo-icon">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
                             <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
                             <line x1="12" y1="22.08" x2="12" y2="12"/>
                         </svg>
                     </div>
-                    <span class="login-logo-text">AssetFlow</span>
-                </Link>
-                <h1 class="login-title">Selamat Datang Kembali</h1>
-                <p class="login-subtitle">Masuk ke sistem manajemen aset & inventaris</p>
-            </div>
-
-            <!-- Login Card -->
-            <div class="login-card">
-                <!-- Alert Banner for Status / Success -->
-                <div v-if="status" class="alert-success-banner">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                        <polyline points="22 4 12 14.01 9 11.01"/>
-                    </svg>
-                    <span>{{ status }}</span>
+                    <div>
+                        <h2 class="portfolio-app-title">AssetFlow</h2>
+                        <p class="portfolio-app-tagline">Inventory & Asset Management</p>
+                    </div>
                 </div>
 
-                <!-- Alert Banner for Errors -->
-                <div v-if="form.errors.email" class="alert-error-banner">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                    </svg>
-                    <span>{{ displayedEmailError }}</span>
+                <p class="portfolio-summary-text">
+                    Sistem enterprise berbasis web untuk pelacakan aset, manajemen stok & inventaris multi-lokasi, serta kontrol akses berbasis peran (RBAC) granular.
+                </p>
+
+                <!-- Tech Stack Section (Minimalist Dot Format, Bebas Badge) -->
+                <div class="portfolio-block">
+                    <div class="portfolio-block-header">
+                        <Code2 :size="14" class="block-header-icon" />
+                        <span>Tech Stack</span>
+                    </div>
+                    <div class="portfolio-tech-list">
+                        <span class="tech-text-item">Laravel 12</span>
+                        <span class="tech-dot">•</span>
+                        <span class="tech-text-item">Vue.js 3</span>
+                        <span class="tech-dot">•</span>
+                        <span class="tech-text-item">Inertia.js</span>
+                        <span class="tech-dot">•</span>
+                        <span class="tech-text-item">MySQL</span>
+                        <span class="tech-dot">•</span>
+                        <span class="tech-text-item">Spatie RBAC</span>
+                        <span class="tech-dot">•</span>
+                        <span class="tech-text-item">TailwindCSS</span>
+                    </div>
                 </div>
 
-                <form @submit.prevent="handleLogin">
-                    <!-- Email Input -->
-                    <div class="form-group">
-                        <label class="form-label" for="email">Alamat Email kamu</label>
-                        <div class="input-wrapper">
-                            <span class="input-icon-left">
-                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                                    <polyline points="22,6 12,13 2,6"/>
-                                </svg>
-                            </span>
-                            <input 
-                                type="email" 
-                                id="email" 
-                                v-model="form.email"
-                                class="form-input-custom" 
-                                :class="{ 'input-error': form.errors.email }"
-                                placeholder="nama@perusahaan.com" 
-                                required 
-                                autocomplete="email"
-                                autofocus
-                            />
+                <!-- Modul & Fitur Section (Modern SVG Lucide Icons) -->
+                <div class="portfolio-block">
+                    <div class="portfolio-block-header">
+                        <Layers :size="14" class="block-header-icon" />
+                        <span>Fitur & Modul Utama</span>
+                    </div>
+                    <div class="portfolio-features-grid">
+                        <div class="feature-card">
+                            <div class="feature-card-icon-box box-indigo">
+                                <Package :size="18" />
+                            </div>
+                            <div>
+                                <h4 class="feature-card-title">Inventaris Barang</h4>
+                                <p class="feature-card-desc">Stok barang, kategori, unit & histori mutasi</p>
+                            </div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-card-icon-box box-blue">
+                                <Building2 :size="18" />
+                            </div>
+                            <div>
+                                <h4 class="feature-card-title">Manajemen Aset</h4>
+                                <p class="feature-card-desc">Audit kondisi aset, lokasi, depresiasi & serial</p>
+                            </div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-card-icon-box box-emerald">
+                                <ShieldCheck :size="18" />
+                            </div>
+                            <div>
+                                <h4 class="feature-card-title">Role-Based Access</h4>
+                                <p class="feature-card-desc">Otorisasi granular via permission & roles</p>
+                            </div>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-card-icon-box box-violet">
+                                <ClipboardCheck :size="18" />
+                            </div>
+                            <div>
+                                <h4 class="feature-card-title">Pengadaan & Approval</h4>
+                                <p class="feature-card-desc">Workflow persetujuan pengadaan barang</p>
+                            </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Password Input -->
-                    <div class="form-group">
-                        <div class="form-label-row">
-                            <label class="form-label" for="password">Kata Sandi</label>
-                            <Link href="/forgot-password" class="forgot-link">Lupa kata sandi?</Link>
+                <!-- Interactive Demo Access Box -->
+                <div class="portfolio-demo-card">
+                    <div class="demo-card-head">
+                        <div class="demo-terminal-dots">
+                            <span class="dot dot-red"></span>
+                            <span class="dot dot-yellow"></span>
+                            <span class="dot dot-green"></span>
+                            <span class="demo-head-title">Akses Akun Demo</span>
                         </div>
-                        <div class="input-wrapper">
-                            <span class="input-icon-left">
-                                <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                                </svg>
-                            </span>
-                            <input 
-                                :type="showPassword ? 'text' : 'password'" 
-                                id="password" 
-                                v-model="form.password"
-                                class="form-input-custom" 
-                                :class="{ 'input-error': form.errors.password }"
-                                placeholder="••••••••" 
-                                required 
-                                autocomplete="current-password"
-                            />
-                            <button 
-                                type="button" 
-                                class="password-toggle" 
-                                @click="togglePasswordVisibility" 
-                                :aria-label="showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'"
+                        <span v-if="isAutoFilled" class="demo-filled-pill">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+                            Kredensial Terisi!
+                        </span>
+                    </div>
+
+                    <div class="demo-card-content">
+                        <div class="demo-account-item">
+                            <div class="demo-account-meta">
+                                <div class="demo-role-badge">
+                                    <span class="role-name">Super Admin</span>
+                                    <span class="role-desc">Full Privileges</span>
+                                </div>
+                                <div class="demo-account-credentials">
+                                    <span class="cred-item">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                                        superadmin@assetflow.io
+                                    </span>
+                                    <span class="cred-dot">•</span>
+                                    <span class="cred-item">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                                        password
+                                    </span>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                class="btn-demo-autofill"
+                                @click="fillCredentials('superadmin@assetflow.io', 'password')"
+                                :class="{ 'is-active': isAutoFilled }"
+                                title="Klik untuk mengisi formulir login secara otomatis"
                             >
-                                <svg v-if="!showPassword" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                    <circle cx="12" cy="12" r="3"/>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                                    <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
                                 </svg>
-                                <svg v-else width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                                    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                                    <line x1="1" y1="1" x2="23" y2="23"/>
-                                </svg>
+                                <span>{{ isAutoFilled ? 'Kredensial Terisi' : 'Isi Otomatis' }}</span>
                             </button>
                         </div>
-                        <p v-if="form.errors.password" class="input-error-msg">{{ form.errors.password }}</p>
+
+                        <div class="demo-upcoming-footer">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <span>Role lainnya (Admin, Staff, Manager) segera ditambahkan sesuai kebutuhan seeder database.</span>
+                        </div>
                     </div>
-
-                    <!-- Remember Me -->
-                    <div class="remember-row">
-                        <label class="checkbox-label">
-                            <input type="checkbox" v-model="form.remember" class="checkbox-custom" />
-                            <span>Ingat saya di perangkat ini</span>
-                        </label>
-                    </div>
-
-                    <!-- Submit Button -->
-                    <button 
-                        type="submit" 
-                        class="btn-submit" 
-                        :class="{ 'is-locked': isLockedOut }"
-                        :disabled="form.processing || isLockedOut"
-                    >
-                        <span>{{ form.processing ? 'Memproses...' : (isLockedOut ? 'Akun Terkunci Sementara' : 'Masuk ke Dashboard') }}</span>
-                        <svg v-if="!isLockedOut" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
-                        </svg>
-                        <svg v-else width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                        </svg>
-                    </button>
-                </form>
-
-                <div class="divider">atau masuk dengan</div>
-
-                <!-- Single Sign-On / Google Button -->
-                <button type="button" class="btn-oauth" disabled>
-                    <svg width="18" height="18" viewBox="0 0 24 24">
-                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-                    </svg>
-                    <span>Masuk dengan Google Workspace</span>
-                </button>
+                </div>
             </div>
 
-            <!-- Footer -->
-            <div class="login-footer">
-                Belum memiliki akun? <Link href="/register">Daftar di sini</Link>
+            <!-- Right Side: Login Card -->
+            <div class="login-card-panel">
+                <div class="login-header-mobile-brand">
+                    <Link href="/" class="login-logo-mobile">
+                        <div class="login-logo-icon">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                                <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+                                <line x1="12" y1="22.08" x2="12" y2="12"/>
+                            </svg>
+                        </div>
+                        <span class="login-logo-text">AssetFlow</span>
+                    </Link>
+                </div>
+
+                <div class="login-card">
+                    <div class="login-header">
+                        <h1 class="login-title">Selamat Datang Kembali</h1>
+                        <p class="login-subtitle">Masuk ke sistem manajemen aset & inventaris</p>
+                    </div>
+
+                    <div v-if="status" class="alert-success-banner">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                        <span>{{ status }}</span>
+                    </div>
+
+                    <!-- Alert Banner for Errors -->
+                    <div v-if="form.errors.email" class="alert-error-banner">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+                        </svg>
+                        <span>{{ displayedEmailError }}</span>
+                    </div>
+
+                    <form @submit.prevent="handleLogin">
+                        <!-- Email Input -->
+                        <div class="form-group">
+                            <label class="form-label" for="email">Alamat Email</label>
+                            <div class="input-wrapper">
+                                <span class="input-icon-left">
+                                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                                        <polyline points="22,6 12,13 2,6"/>
+                                    </svg>
+                                </span>
+                                <input 
+                                    type="email" 
+                                    id="email" 
+                                    v-model="form.email" 
+                                    class="form-input-custom" 
+                                    :class="{ 'input-error': form.errors.email }"
+                                    placeholder="nama@perusahaan.com" 
+                                    required 
+                                    autocomplete="email"
+                                    autofocus
+                                />
+                            </div>
+                        </div>
+
+                        <!-- Password Input -->
+                        <div class="form-group">
+                            <div class="form-label-row">
+                                <label class="form-label" for="password">Kata Sandi</label>
+                                <Link href="/forgot-password" class="forgot-link">Lupa kata sandi?</Link>
+                            </div>
+                            <div class="input-wrapper">
+                                <span class="input-icon-left">
+                                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                                    </svg>
+                                </span>
+                                <input 
+                                    :type="showPassword ? 'text' : 'password'" 
+                                    id="password" 
+                                    v-model="form.password" 
+                                    class="form-input-custom" 
+                                    :class="{ 'input-error': form.errors.password }"
+                                    placeholder="••••••••" 
+                                    required 
+                                    autocomplete="current-password"
+                                />
+                                <button 
+                                    type="button" 
+                                    class="password-toggle" 
+                                    @click="togglePasswordVisibility" 
+                                    :aria-label="showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'"
+                                >
+                                    <svg v-if="!showPassword" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                        <circle cx="12" cy="12" r="3"/>
+                                    </svg>
+                                    <svg v-else width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                                        <line x1="1" y1="1" x2="23" y2="23"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <p v-if="form.errors.password" class="input-error-msg">{{ form.errors.password }}</p>
+                        </div>
+
+                        <!-- Remember Me -->
+                        <div class="remember-row">
+                            <label class="checkbox-label">
+                                <input type="checkbox" v-model="form.remember" class="checkbox-custom" />
+                                <span>Ingat saya di perangkat ini</span>
+                            </label>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button 
+                            type="submit" 
+                            class="btn-submit" 
+                            :class="{ 'is-locked': isLockedOut }"
+                            :disabled="form.processing || isLockedOut"
+                        >
+                            <span>{{ form.processing ? 'Memproses...' : (isLockedOut ? 'Akun Terkunci Sementara' : 'Masuk ke Dashboard') }}</span>
+                            <svg v-if="!isLockedOut" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+                            </svg>
+                            <svg v-else width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                            </svg>
+                        </button>
+                    </form>
+
+                    <div class="divider">atau masuk dengan</div>
+
+                    <!-- Single Sign-On / Google Button -->
+                    <button type="button" class="btn-oauth" disabled>
+                        <svg width="18" height="18" viewBox="0 0 24 24">
+                            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                        </svg>
+                        <span>Masuk dengan Google Workspace</span>
+                    </button>
+                </div>
+
+                <!-- Footer -->
+                <div class="login-footer">
+                    Belum memiliki akun? <Link href="/register">Daftar di sini</Link>
+                </div>
             </div>
         </div>
     </div>
