@@ -55,6 +55,7 @@ class UserRegistrationApprovalController extends Controller
             'availableRoles' => $availableRoles,
             'filters' => $request->only(['search', 'department_id']),
             'status' => session('status'),
+            'warning' => session('warning'),
         ]);
     }
 
@@ -72,7 +73,15 @@ class UserRegistrationApprovalController extends Controller
             ]);
         }
 
-        $approvalService->approve($user, $request->validated('roles'));
+        $result = $approvalService->approve($user, $request->validated('roles'));
+
+        if (! $result['email_sent']) {
+            $warningMsg = __('Pendaftaran pengguna :name berhasil disetujui, namun notifikasi email gagal dikirim (koneksi server email terblokir/timeout). Silakan gunakan jaringan lain jika ingin menguji pengiriman email.', ['name' => $user->name]);
+
+            return redirect()->route('admin.user-registrations.index')
+                ->with('status', $warningMsg)
+                ->with('warning', $warningMsg);
+        }
 
         return redirect()->route('admin.user-registrations.index')->with(
             'status',
@@ -94,7 +103,15 @@ class UserRegistrationApprovalController extends Controller
             ]);
         }
 
-        $approvalService->reject($user);
+        $result = $approvalService->reject($user);
+
+        if (! $result['email_sent']) {
+            $warningMsg = __('Pendaftaran pengguna :name telah ditolak, namun notifikasi email gagal dikirim (koneksi server email terblokir/timeout). Silakan gunakan jaringan lain jika ingin menguji pengiriman email.', ['name' => $user->name]);
+
+            return redirect()->route('admin.user-registrations.index')
+                ->with('status', $warningMsg)
+                ->with('warning', $warningMsg);
+        }
 
         return redirect()->route('admin.user-registrations.index')->with(
             'status',

@@ -158,3 +158,23 @@ test('password cannot be reset with password shorter than 8 characters', functio
 
     $response->assertSessionHasErrors('password');
 });
+
+test('reset password link request gracefully handles mail transport exception with user friendly error', function () {
+    $user = User::factory()->create([
+        'email' => 'resetuser@assetflow.io',
+        'is_active' => true,
+    ]);
+
+    Password::shouldReceive('sendResetLink')
+        ->once()
+        ->andThrow(new \Symfony\Component\Mailer\Exception\TransportException('SMTP port 587 connection refused'));
+
+    $response = $this->post('/forgot-password', [
+        'email' => 'resetuser@assetflow.io',
+    ]);
+
+    $response->assertSessionHasErrors('email');
+    $errors = session('errors')->get('email');
+    expect($errors[0])->toContain('koneksi server email terblokir/timeout');
+});
+

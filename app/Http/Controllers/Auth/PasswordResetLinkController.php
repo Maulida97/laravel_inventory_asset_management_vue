@@ -29,9 +29,18 @@ class PasswordResetLinkController extends Controller
      */
     public function store(PasswordResetLinkRequest $request): RedirectResponse
     {
-        $status = Password::sendResetLink([
-            'email' => Str::lower($request->input('email')),
-        ]);
+        try {
+            $status = Password::sendResetLink([
+                'email' => Str::lower($request->input('email')),
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Gagal mengirim link reset kata sandi: ' . $e->getMessage());
+
+            return back()->withInput($request->only('email'))
+                ->withErrors([
+                    'email' => __('Gagal mengirim link reset kata sandi (koneksi server email terblokir/timeout). Silakan coba gunakan jaringan internet lain.'),
+                ]);
+        }
 
         return $status === Password::RESET_LINK_SENT
             ? back()->with('status', __($status))

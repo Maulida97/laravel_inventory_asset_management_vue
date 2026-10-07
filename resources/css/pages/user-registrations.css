@@ -556,3 +556,30 @@
     cursor: not-allowed;
     pointer-events: none;
 }
+
+/* Flash Alert Banners */
+.alert-success-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: var(--radius-lg);
+    color: #10b981;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}
+
+.alert-warning-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: var(--radius-lg);
+    color: #f59e0b;
+    font-size: 0.875rem;
+    line-height: 1.5;
+}

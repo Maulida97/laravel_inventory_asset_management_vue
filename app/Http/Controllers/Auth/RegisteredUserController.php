@@ -56,7 +56,11 @@ class RegisteredUserController extends Controller
         })->where('is_active', true)->get();
 
         if ($superAdmins->isNotEmpty()) {
-            Notification::send($superAdmins, new NewUserRegistrationNotification($user));
+            try {
+                Notification::send($superAdmins, new NewUserRegistrationNotification($user));
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('Gagal mengirim NewUserRegistrationNotification ke Super Admin: ' . $e->getMessage());
+            }
         }
 
         return redirect()->route('login')->with(
