@@ -37,6 +37,10 @@ const props = defineProps({
         type: String,
         default: null,
     },
+    warning: {
+        type: String,
+        default: null,
+    },
 });
 
 // Filters
@@ -197,7 +201,11 @@ const getRoleDescription = (roleName) => {
             </div>
 
             <!-- Flash Alert Banner -->
-            <div v-if="status" class="alert-success-banner" style="margin-bottom: 20px;">
+            <div v-if="warning" class="alert-warning-banner" style="margin-bottom: 20px;">
+                <AlertCircle class="w-5 h-5 flex-shrink-0" />
+                <span>{{ warning }}</span>
+            </div>
+            <div v-else-if="status" class="alert-success-banner" style="margin-bottom: 20px;">
                 <UserCheck class="w-5 h-5 flex-shrink-0" />
                 <span>{{ status }}</span>
             </div>

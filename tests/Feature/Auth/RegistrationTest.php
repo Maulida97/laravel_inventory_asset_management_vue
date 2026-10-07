@@ -284,3 +284,34 @@ test('NewUserRegistrationNotification renders mail message with review action UR
     expect($mailMessage->viewData['reviewUrl'])->toBe(route('admin.user-registrations.index'));
     expect($mailMessage->subject)->toContain('Pendaftaran Akun Baru Menunggu Persetujuan');
 });
+
+test('registration succeeds cleanly without crashing when notification dispatch encounters transport error', function () {
+    \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Super Admin', 'guard_name' => 'web']);
+
+    $superAdmin = User::factory()->create(['is_active' => true]);
+    $superAdmin->assignRole('Super Admin');
+
+    $dept = Department::factory()->create(['is_active' => true]);
+
+    Notification::shouldReceive('send')
+        ->once()
+        ->andThrow(new \Symfony\Component\Mailer\Exception\TransportException('SMTP port 465 connection timed out'));
+
+    $response = $this->post('/register', [
+        'name' => 'Resilient Applicant',
+        'email' => 'resilient@example.com',
+        'department_id' => $dept->id,
+        'password' => 'password123',
+        'password_confirmation' => 'password123',
+    ]);
+
+    $response->assertRedirect(route('login'));
+    $response->assertSessionHas('status');
+
+    $this->assertDatabaseHas('users', [
+        'email' => 'resilient@example.com',
+        'registration_status' => 'pending',
+        'is_active' => false,
+    ]);
+});
+

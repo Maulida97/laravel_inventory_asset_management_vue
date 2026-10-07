@@ -340,3 +340,61 @@ test('processing non-pending user does not dispatch any notifications', function
     Notification::assertNothingSent();
 });
 
+test('approving registration succeeds and flashes warning when email dispatch encounters transport error', function () {
+    $superAdmin = User::factory()->create([
+        'is_active' => true,
+        'registration_status' => 'approved',
+    ]);
+    $superAdmin->assignRole('Super Admin');
+
+    $pendingUser = User::factory()->pendingRegistration()->inactive()->create([
+        'name' => 'Budi Santoso',
+        'email' => 'budi.santoso@example.com',
+    ]);
+
+    Notification::shouldReceive('send')
+        ->once()
+        ->andThrow(new \Symfony\Component\Mailer\Exception\TransportException('Connection timed out on port 465'));
+
+    $response = $this->actingAs($superAdmin)->post("/settings/user-registrations/{$pendingUser->id}/approve", [
+        'roles' => ['Requester'],
+    ]);
+
+    $response->assertRedirect(route('admin.user-registrations.index'));
+    $response->assertSessionHas('warning');
+    $response->assertSessionHas('status');
+
+    $pendingUser->refresh();
+    expect($pendingUser->registration_status)->toBe('approved')
+        ->and($pendingUser->is_active)->toBeTrue()
+        ->and($pendingUser->hasRole('Requester'))->toBeTrue();
+});
+
+test('rejecting registration succeeds and flashes warning when email dispatch encounters transport error', function () {
+    $superAdmin = User::factory()->create([
+        'is_active' => true,
+        'registration_status' => 'approved',
+    ]);
+    $superAdmin->assignRole('Super Admin');
+
+    $pendingUser = User::factory()->pendingRegistration()->inactive()->create([
+        'name' => 'Rejected Candidate',
+        'email' => 'rejected.candidate@example.com',
+    ]);
+
+    Notification::shouldReceive('send')
+        ->once()
+        ->andThrow(new \Symfony\Component\Mailer\Exception\TransportException('Connection refused on port 587'));
+
+    $response = $this->actingAs($superAdmin)->post("/settings/user-registrations/{$pendingUser->id}/reject");
+
+    $response->assertRedirect(route('admin.user-registrations.index'));
+    $response->assertSessionHas('warning');
+    $response->assertSessionHas('status');
+
+    $pendingUser->refresh();
+    expect($pendingUser->registration_status)->toBe('rejected')
+        ->and($pendingUser->is_active)->toBeFalse();
+});
+
+
