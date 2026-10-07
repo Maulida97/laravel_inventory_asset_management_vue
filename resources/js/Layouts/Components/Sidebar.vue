@@ -83,7 +83,7 @@ const canAccessReports = computed(() => {
 });
 
 const canAccessAdmin = computed(() => {
-    return isSuperAdmin.value || can('user.view') || can('department.manage');
+    return isSuperAdmin.value || can('user.view') || can('department.manage') || can('location.view');
 });
 </script>
 
@@ -207,7 +207,8 @@ const canAccessAdmin = computed(() => {
                     :children="[
                         { label: 'Persetujuan Registrasi', href: '/settings/user-registrations', icon: UserCheck },
                         { label: 'Manajemen Pengguna', href: '/settings/users', icon: Users },
-                        { label: 'Departemen & Lokasi', href: '/settings/departments', icon: MapPin },
+                        { label: 'Manajemen Lokasi', href: '/locations', icon: MapPin },
+                        { label: 'Departemen', href: '/settings/departments', icon: Building2 },
                         { label: 'Pengaturan Sistem', href: '/settings/system', icon: SlidersHorizontal },
                     ]"
                 />
