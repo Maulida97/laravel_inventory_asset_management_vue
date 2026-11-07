@@ -186,16 +186,17 @@
     text-overflow: ellipsis;
 }
 
-/* Mobile responsive drawer */
-@media (max-width: 768px) {
+/* Mobile and Tablet responsive drawer */
+@media (max-width: 1024px) {
     .app-sidebar {
         position: fixed;
-        left: -260px;
+        left: -280px;
         top: 0;
         bottom: 0;
         z-index: 50;
-        width: 260px !important;
-        box-shadow: var(--shadow-xl);
+        width: 280px !important;
+        box-shadow: var(--shadow-2xl);
+        transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .app-sidebar.mobile-open {
@@ -203,6 +204,8 @@
     }
 
     .sidebar-mobile-close {
-        display: block;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 }

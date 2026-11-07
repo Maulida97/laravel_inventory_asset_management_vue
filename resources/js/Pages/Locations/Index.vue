@@ -664,7 +664,7 @@ const formatTypeName = (type) => {
                         </div>
 
                         <!-- Code & Name Row -->
-                        <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 12px;">
+                        <div class="loc-code-name-grid">
                             <div class="form-field-group">
                                 <label>Kode Lokasi <span class="required-mark">*</span></label>
                                 <input

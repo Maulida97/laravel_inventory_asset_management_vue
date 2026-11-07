@@ -1,19 +1,24 @@
 .login-wrapper {
     min-height: 100vh;
+    width: 100%;
+    max-width: 100vw;
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
     background-color: var(--bg-page);
     color: var(--text-primary);
-    padding: 20px;
-    overflow-y: auto;
+    padding: 32px 20px;
     position: relative;
+    box-sizing: border-box;
+    overflow-x: hidden;
     transition: background-color var(--transition), color var(--transition);
 }
 
 .ambient-glow {
     position: absolute;
     width: 500px;
+    max-width: 100vw;
     height: 500px;
     border-radius: 50%;
     background: radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, rgba(99, 102, 241, 0) 70%);
@@ -29,6 +34,7 @@
     max-width: 440px;
     position: relative;
     z-index: 1;
+    margin: auto;
 }
 
 .login-layout-grid {
@@ -40,7 +46,7 @@
     align-items: stretch;
     position: relative;
     z-index: 1;
-    margin: 20px auto;
+    margin: auto;
 }
 
 /* Portfolio Showcase Card */
@@ -229,7 +235,7 @@
 
 .portfolio-features-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 10px;
 }
 
@@ -241,6 +247,7 @@
     border-radius: var(--radius-md);
     background: var(--bg-muted);
     border: 1px solid var(--border-light);
+    min-width: 0;
     transition: all var(--transition);
 }
 
@@ -401,6 +408,8 @@
     gap: 6px;
     font-size: 0.75rem;
     color: var(--text-secondary);
+    min-width: 0;
+    word-break: break-all;
 }
 
 .cred-item {
@@ -471,9 +480,36 @@
     }
 }
 
-@media (max-width: 540px) {
-    .portfolio-features-grid {
-        grid-template-columns: 1fr;
+@media (max-width: 640px) {
+    .login-wrapper {
+        padding: 56px 12px 28px;
+        justify-content: flex-start;
+    }
+
+    .login-layout-grid,
+    .login-container,
+    .register-container {
+        margin: 0 auto;
+    }
+
+    .login-card,
+    .portfolio-showcase-card {
+        padding: 20px 16px;
+        border-radius: var(--radius-lg);
+    }
+
+    .login-title {
+        font-size: 1.25rem;
+    }
+
+    .portfolio-status-strip {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+
+    .portfolio-tech-list {
+        flex-wrap: wrap;
     }
 
     .demo-account-item {
@@ -482,9 +518,19 @@
         gap: 10px;
     }
 
+    .demo-account-credentials {
+        flex-wrap: wrap;
+    }
+
     .btn-demo-autofill {
         width: 100%;
         justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .portfolio-features-grid {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -779,9 +825,9 @@
 
 .theme-switcher-float {
     position: fixed;
-    top: 24px;
-    right: 24px;
-    display: flex;
+    top: max(20px, env(safe-area-inset-top));
+    right: max(20px, env(safe-area-inset-right));
+    display: inline-flex;
     align-items: center;
     gap: 8px;
     padding: 8px 14px;
@@ -791,15 +837,27 @@
     color: var(--text-secondary);
     font-size: 0.8125rem;
     font-weight: 500;
+    white-space: nowrap;
     cursor: pointer;
     box-shadow: var(--shadow-md);
     backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
     transition: all var(--transition);
-    z-index: 10;
+    z-index: 100;
 }
 .theme-switcher-float:hover {
     color: var(--text-primary);
     background: var(--bg-hover);
+}
+
+@media (max-width: 640px) {
+    .theme-switcher-float {
+        top: max(12px, env(safe-area-inset-top));
+        right: max(12px, env(safe-area-inset-right));
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        gap: 6px;
+    }
 }
 
 /* Extended styles for Registration and Multi-column forms */
@@ -808,6 +866,7 @@
     max-width: 580px;
     position: relative;
     z-index: 1;
+    margin: auto;
 }
 
 .form-grid-2 {

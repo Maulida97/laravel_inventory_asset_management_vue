@@ -47,7 +47,8 @@
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
-    width: 320px;
+    width: min(320px, calc(100vw - 24px));
+    max-width: calc(100vw - 24px);
     background-color: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-md, 10px);
@@ -55,6 +56,12 @@
     z-index: 50;
     overflow: hidden;
     animation: fadeIn 0.15s ease;
+}
+
+@media (max-width: 480px) {
+    .notification-popover {
+        right: -48px;
+    }
 }
 
 @keyframes fadeIn {
