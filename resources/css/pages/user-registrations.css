@@ -151,10 +151,12 @@
 .table-responsive {
     width: 100%;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .custom-table {
     width: 100%;
+    min-width: 800px;
     border-collapse: collapse;
     text-align: left;
     font-size: 0.875rem;
@@ -332,6 +334,9 @@
     border-radius: var(--radius-xl);
     width: 100%;
     max-width: 540px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
     box-shadow: var(--shadow-xl);
     overflow: hidden;
     animation: modalPop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -354,6 +359,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-shrink: 0;
 }
 
 .modal-title {
@@ -378,8 +384,8 @@
 
 .modal-body {
     padding: 24px;
-    max-height: 70vh;
     overflow-y: auto;
+    flex: 1;
 }
 
 .user-summary-card {
@@ -453,6 +459,7 @@
     display: flex;
     justify-content: flex-end;
     gap: 12px;
+    flex-shrink: 0;
 }
 
 .btn-modal-cancel {
@@ -582,4 +589,101 @@
     color: #f59e0b;
     font-size: 0.875rem;
     line-height: 1.5;
+}
+
+/* Responsive Media Queries */
+@media (max-width: 1024px) {
+    .page-container {
+        padding: 20px 16px;
+    }
+}
+
+@media (max-width: 768px) {
+    .filter-grid {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+
+    .filter-search-wrapper {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .filter-select {
+        min-width: 0;
+        width: 100%;
+    }
+
+    .btn-filter-reset {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 640px) {
+    .page-container {
+        padding: 14px 10px;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+    }
+
+    .stat-badge {
+        width: fit-content;
+    }
+
+    .pagination-wrapper {
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        text-align: center;
+    }
+
+    .pagination-links {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .user-summary-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+    }
+
+    .modal-header {
+        padding: 14px 16px;
+    }
+
+    .modal-body {
+        padding: 16px;
+    }
+
+    .modal-footer {
+        flex-direction: column-reverse;
+        align-items: stretch;
+        gap: 8px;
+        padding: 14px 16px;
+    }
+
+    .btn-modal-cancel,
+    .btn-modal-confirm-approve,
+    .btn-modal-confirm-reject {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .role-checkbox-item {
+        padding: 10px;
+        gap: 8px;
+    }
+
+    .table-actions {
+        flex-direction: column;
+        gap: 4px;
+    }
 }

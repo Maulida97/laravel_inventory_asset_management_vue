@@ -150,18 +150,43 @@
     pointer-events: none;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
     .global-search-container {
         display: none;
     }
-}
 
-@media (max-width: 768px) {
     .desktop-toggle {
         display: none;
     }
 
     .mobile-toggle {
         display: flex;
+    }
+}
+
+@media (max-width: 640px) {
+    .app-navbar {
+        padding: 0 0.75rem;
+    }
+
+    .navbar-left {
+        gap: 0.5rem;
+    }
+
+    .navbar-right {
+        gap: 0.375rem;
+    }
+
+    /* On narrow mobile, show only current page in breadcrumb to avoid crowding */
+    .breadcrumb-item:not(:last-child) {
+        display: none;
+    }
+
+    .breadcrumb-current {
+        max-width: 130px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
     }
 }

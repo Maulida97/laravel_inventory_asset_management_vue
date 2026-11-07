@@ -78,6 +78,7 @@
     top: calc(100% + 8px);
     right: 0;
     width: 230px;
+    max-width: calc(100vw - 20px);
     background-color: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: var(--radius-md, 10px);
