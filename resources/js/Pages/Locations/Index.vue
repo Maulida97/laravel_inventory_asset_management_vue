@@ -17,6 +17,7 @@ import {
     Check,
     X,
     AlertTriangle,
+    AlertCircle,
     CheckCircle2,
     Layers,
     CornerDownRight,
@@ -57,6 +58,10 @@ const props = defineProps({
         default: null,
     },
     warning: {
+        type: String,
+        default: null,
+    },
+    error: {
         type: String,
         default: null,
     },
@@ -284,6 +289,13 @@ const formatTypeName = (type) => {
                 <div class="alert-banner-left">
                     <AlertTriangle class="w-5 h-5 flex-shrink-0" />
                     <span>{{ warning }}</span>
+                </div>
+            </div>
+
+            <div v-if="error" class="locations-alert-banner error">
+                <div class="alert-banner-left">
+                    <AlertCircle class="w-5 h-5 flex-shrink-0" />
+                    <span>{{ error }}</span>
                 </div>
             </div>
 

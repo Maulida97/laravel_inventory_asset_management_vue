@@ -42,14 +42,52 @@ class StoreLocationRequest extends FormRequest
         $validator->after(function ($validator) {
             if ($this->filled('parent_id')) {
                 $parent = Location::find($this->input('parent_id'));
-                if ($parent && ! $parent->isParent()) {
-                    $validator->errors()->add(
-                        'parent_id',
-                        'Lokasi induk yang dipilih adalah sub-lokasi. Struktur lokasi dibatasi maksimal 2 tingkat (Parent → Child).'
-                    );
+
+                if ($parent) {
+                    // Rule 1: Limit hierarchy to 2 levels (Parent -> Child)
+                    if (! $parent->isParent()) {
+                        $validator->errors()->add(
+                            'parent_id',
+                            'Lokasi induk yang dipilih adalah sub-lokasi. Struktur lokasi dibatasi maksimal 2 tingkat (Parent → Child).'
+                        );
+                    }
+
+                    // Rule 2: Cannot add a child under an inactive parent
+                    if (! $parent->is_active) {
+                        $validator->errors()->add(
+                            'parent_id',
+                            'Lokasi induk yang dipilih sedang nonaktif. Aktifkan lokasi induk terlebih dahulu sebelum menambahkan sub-lokasi.'
+                        );
+                    }
                 }
             }
         });
+    }
+
+    /**
+     * Check if the selected parent location currently stores items or assets (BR-L02).
+     */
+    public function targetParentHasItems(): bool
+    {
+        if (! $this->filled('parent_id')) {
+            return false;
+        }
+
+        $parent = Location::find($this->input('parent_id'));
+
+        return $parent ? $parent->hasItemsOrAssets(false) : false;
+    }
+
+    /**
+     * Get the target parent model instance if parent_id is filled.
+     */
+    public function getTargetParent(): ?Location
+    {
+        if (! $this->filled('parent_id')) {
+            return null;
+        }
+
+        return Location::find($this->input('parent_id'));
     }
 
     /**

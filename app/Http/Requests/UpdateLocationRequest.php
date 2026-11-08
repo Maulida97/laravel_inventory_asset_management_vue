@@ -58,37 +58,121 @@ class UpdateLocationRequest extends FormRequest
                 return;
             }
 
-            $parentId = $this->input('parent_id');
+            $rawParentId = $this->input('parent_id');
+            $newParentId = (! empty($rawParentId)) ? (int) $rawParentId : null;
+            $oldParentId = $currentLocation->parent_id ? (int) $currentLocation->parent_id : null;
 
-            if ($parentId !== null) {
-                // 1. Cannot set self as parent
-                if ((int) $parentId === (int) $currentLocation->id) {
-                    $validator->errors()->add(
-                        'parent_id',
-                        'Lokasi tidak dapat dijadikan sebagai induk dari dirinya sendiri.'
-                    );
-                    return;
+            // 1. Cannot set self as parent
+            if ($newParentId !== null && $newParentId === (int) $currentLocation->id) {
+                $validator->errors()->add(
+                    'parent_id',
+                    'Lokasi tidak dapat dijadikan sebagai induk dari dirinya sendiri.'
+                );
+
+                return;
+            }
+
+            // 2. Cannot assign parent if this location already has children (depth limit 2 levels)
+            if ($newParentId !== null && $currentLocation->children()->exists()) {
+                $validator->errors()->add(
+                    'parent_id',
+                    'Lokasi induk yang sudah memiliki sub-lokasi tidak dapat diubah menjadi sub-lokasi.'
+                );
+
+                return;
+            }
+
+            // 3. Target parent checks
+            if ($newParentId !== null) {
+                $targetParent = Location::find($newParentId);
+
+                if ($targetParent) {
+                    if (! $targetParent->isParent()) {
+                        $validator->errors()->add(
+                            'parent_id',
+                            'Lokasi induk yang dipilih adalah sub-lokasi. Struktur lokasi dibatasi maksimal 2 tingkat (Parent → Child).'
+                        );
+                    }
+
+                    if (! $targetParent->is_active) {
+                        $validator->errors()->add(
+                            'parent_id',
+                            'Lokasi induk yang dipilih sedang nonaktif. Aktifkan lokasi induk terlebih dahulu.'
+                        );
+                    }
                 }
+            }
 
-                // 2. Cannot assign parent if this location already has children (to avoid 3-level depth)
-                if ($currentLocation->children()->exists()) {
+            // 4. BR-L05: Moving child to another parent OR changing child to top-level parent requires empty location
+            if ($currentLocation->isChild() && $newParentId !== $oldParentId) {
+                if (! $currentLocation->isEmpty(false)) {
                     $validator->errors()->add(
                         'parent_id',
-                        'Lokasi induk yang sudah memiliki sub-lokasi tidak dapat diubah menjadi sub-lokasi.'
-                    );
-                    return;
-                }
-
-                // 3. Target parent must be a top-level parent (cannot be a child itself)
-                $parent = Location::find($parentId);
-                if ($parent && ! $parent->isParent()) {
-                    $validator->errors()->add(
-                        'parent_id',
-                        'Lokasi induk yang dipilih adalah sub-lokasi. Struktur lokasi dibatasi maksimal 2 tingkat (Parent → Child).'
+                        "Sub-lokasi {$currentLocation->name} hanya dapat dipindahkan atau diubah strukturnya jika dalam keadaan kosong (tidak memiliki barang atau aset aktif) (BR-L05)."
                     );
                 }
             }
+
+            // 5. BR-L03: Cannot deactivate location if it still has items or active assets
+            if ($this->has('is_active')) {
+                $newIsActive = filter_var($this->input('is_active'), FILTER_VALIDATE_BOOLEAN);
+
+                if ($currentLocation->is_active && ! $newIsActive) {
+                    if (! $currentLocation->isEmpty(true)) {
+                        $validator->errors()->add(
+                            'is_active',
+                            "Lokasi {$currentLocation->name} ({$currentLocation->code}) tidak dapat dinonaktifkan karena masih memiliki barang atau aset aktif (BR-L03)."
+                        );
+                    }
+                }
+
+                // Child cannot be active if its parent is inactive
+                if (! $currentLocation->is_active && $newIsActive) {
+                    $parentToCheck = $newParentId !== null ? Location::find($newParentId) : $currentLocation->parent;
+                    if ($parentToCheck && ! $parentToCheck->is_active) {
+                        $validator->errors()->add(
+                            'is_active',
+                            "Sub-lokasi tidak dapat diaktifkan karena lokasi induknya ({$parentToCheck->name}) masih berstatus nonaktif."
+                        );
+                    }
+                }
+            }
         });
+    }
+
+    /**
+     * Check if the new target parent location currently holds items or assets (BR-L02).
+     */
+    public function targetParentHasItems(): bool
+    {
+        /** @var Location|int|string $location */
+        $location = $this->route('location');
+        $currentLocation = $location instanceof Location ? $location : Location::find($location);
+
+        $rawParentId = $this->input('parent_id');
+        $newParentId = (! empty($rawParentId)) ? (int) $rawParentId : null;
+        $oldParentId = $currentLocation ? $currentLocation->parent_id : null;
+
+        if ($newParentId === null || $newParentId === $oldParentId) {
+            return false;
+        }
+
+        $parent = Location::find($newParentId);
+
+        return $parent ? $parent->hasItemsOrAssets(false) : false;
+    }
+
+    /**
+     * Get the target parent instance.
+     */
+    public function getTargetParent(): ?Location
+    {
+        $rawParentId = $this->input('parent_id');
+        if (empty($rawParentId)) {
+            return null;
+        }
+
+        return Location::find($rawParentId);
     }
 
     /**

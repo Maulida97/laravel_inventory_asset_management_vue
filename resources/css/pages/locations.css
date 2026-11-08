@@ -859,6 +859,12 @@
     color: #f59e0b;
 }
 
+.locations-alert-banner.error {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #ef4444;
+}
+
 .alert-banner-left {
     display: flex;
     align-items: center;
