@@ -85,13 +85,16 @@ const canAccessReports = computed(() => {
 const canAccessAdmin = computed(() => {
     return isSuperAdmin.value || can('user.view') || can('department.manage') || can('location.view');
 });
+
+// Effective collapsed state: on mobile drawer, always expand regardless of desktop collapsed preference
+const isEffectiveCollapsed = computed(() => props.collapsed && !props.mobileOpen);
 </script>
 
 <template>
     <aside
         class="app-sidebar"
         :class="{
-            'is-collapsed': collapsed,
+            'is-collapsed': isEffectiveCollapsed,
             'mobile-open': mobileOpen,
         }"
     >
@@ -105,7 +108,7 @@ const canAccessAdmin = computed(() => {
                         <line x1="12" y1="22.08" x2="12" y2="12"/>
                     </svg>
                 </div>
-                <div v-if="!collapsed" class="brand-info">
+                <div v-if="!isEffectiveCollapsed" class="brand-info">
                     <span class="brand-name">AssetFlow</span>
                     <span class="brand-tag">Enterprise</span>
                 </div>
@@ -126,22 +129,22 @@ const canAccessAdmin = computed(() => {
         <nav class="sidebar-scrollable-nav">
             <!-- 1. UTAMA -->
             <div class="nav-section">
-                <span v-if="!collapsed" class="section-heading">Utama</span>
+                <span v-if="!isEffectiveCollapsed" class="section-heading">Utama</span>
                 <SidebarItem
                     href="/"
                     label="Dashboard"
                     :icon="LayoutDashboard"
-                    :collapsed="collapsed"
+                    :collapsed="isEffectiveCollapsed"
                 />
             </div>
 
             <!-- 2. MANAJEMEN STOK -->
             <div v-if="canAccessStock" class="nav-section">
-                <span v-if="!collapsed" class="section-heading">Manajemen Stok</span>
+                <span v-if="!isEffectiveCollapsed" class="section-heading">Manajemen Stok</span>
                 <SidebarItem
                     label="Inventaris"
                     :icon="Package"
-                    :collapsed="collapsed"
+                    :collapsed="isEffectiveCollapsed"
                     :children="[
                         { label: 'Item Master', href: '/inventory/items', icon: Package },
                         { label: 'Ledger Mutasi', href: '/inventory/ledger', icon: Layers },
@@ -155,11 +158,11 @@ const canAccessAdmin = computed(() => {
 
             <!-- 3. MANAJEMEN ASET -->
             <div v-if="canAccessAssets" class="nav-section">
-                <span v-if="!collapsed" class="section-heading">Manajemen Aset</span>
+                <span v-if="!isEffectiveCollapsed" class="section-heading">Manajemen Aset</span>
                 <SidebarItem
                     label="Aset Tetap"
                     :icon="Building2"
-                    :collapsed="collapsed"
+                    :collapsed="isEffectiveCollapsed"
                     :children="[
                         { label: 'Register Aset', href: '/assets/items', icon: QrCode },
                         { label: 'Serah Terima (Check In/Out)', href: '/assets/check-in-out', icon: ArrowLeftRight },
@@ -171,12 +174,12 @@ const canAccessAdmin = computed(() => {
 
             <!-- 4. ALUR KERJA / APPROVAL -->
             <div v-if="canAccessApprovals" class="nav-section">
-                <span v-if="!collapsed" class="section-heading">Alur Kerja</span>
+                <span v-if="!isEffectiveCollapsed" class="section-heading">Alur Kerja</span>
                 <SidebarItem
                     href="/approvals"
                     label="Inbox Approval"
                     :icon="CheckSquare"
-                    :collapsed="collapsed"
+                    :collapsed="isEffectiveCollapsed"
                     :badge="null"
                     badge-variant="warning"
                 />
@@ -184,11 +187,11 @@ const canAccessAdmin = computed(() => {
 
             <!-- 5. WAWASAN & LAPORAN -->
             <div v-if="canAccessReports" class="nav-section">
-                <span v-if="!collapsed" class="section-heading">Wawasan</span>
+                <span v-if="!isEffectiveCollapsed" class="section-heading">Wawasan</span>
                 <SidebarItem
                     label="Laporan"
                     :icon="BarChart3"
-                    :collapsed="collapsed"
+                    :collapsed="isEffectiveCollapsed"
                     :children="[
                         { label: 'Laporan Inventaris', href: '/reports/inventory', icon: FileSpreadsheet },
                         { label: 'Laporan Aset', href: '/reports/assets', icon: FileText },
@@ -199,11 +202,11 @@ const canAccessAdmin = computed(() => {
 
             <!-- 6. ADMINISTRASI -->
             <div v-if="canAccessAdmin" class="nav-section">
-                <span v-if="!collapsed" class="section-heading">Administrasi</span>
+                <span v-if="!isEffectiveCollapsed" class="section-heading">Administrasi</span>
                 <SidebarItem
                     label="Pengaturan"
                     :icon="Settings"
-                    :collapsed="collapsed"
+                    :collapsed="isEffectiveCollapsed"
                     :children="[
                         { label: 'Persetujuan Registrasi', href: '/settings/user-registrations', icon: UserCheck },
                         { label: 'Manajemen Pengguna', href: '/settings/users', icon: Users },
@@ -217,11 +220,11 @@ const canAccessAdmin = computed(() => {
 
         <!-- Footer User Profile card -->
         <div class="sidebar-footer">
-            <div class="user-card" :class="{ 'is-collapsed': collapsed }">
+            <div class="user-card" :class="{ 'is-collapsed': isEffectiveCollapsed }">
                 <div class="user-avatar-circle">
                     {{ userInitials }}
                 </div>
-                <div v-if="!collapsed" class="user-meta">
+                <div v-if="!isEffectiveCollapsed" class="user-meta">
                     <span class="user-name" :title="user?.name">{{ user?.name || 'User' }}</span>
                     <span class="user-role-badge">{{ userRole }}</span>
                 </div>
