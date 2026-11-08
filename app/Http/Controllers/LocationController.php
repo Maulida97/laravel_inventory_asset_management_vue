@@ -55,10 +55,12 @@ class LocationController extends Controller
         try {
             $location = $locationService->createLocation($request->validated());
 
-            $redirect = redirect()->route('locations.index')->with(
-                'status',
-                "Lokasi {$location->name} ({$location->code}) berhasil ditambahkan."
-            );
+            $redirect = redirect()
+                ->back(fallback: route('locations.index'))
+                ->with(
+                    'status',
+                    "Lokasi {$location->name} ({$location->code}) berhasil ditambahkan."
+                );
 
             // BR-L02: Flash warning if adding child under parent that still stores items/assets
             if ($request->targetParentHasItems()) {
@@ -95,10 +97,12 @@ class LocationController extends Controller
         try {
             $updated = $locationService->updateLocation($location, $request->validated());
 
-            $redirect = redirect()->route('locations.index')->with(
-                'status',
-                "Lokasi {$updated->name} ({$updated->code}) berhasil diperbarui."
-            );
+            $redirect = redirect()
+                ->back(fallback: route('locations.index'))
+                ->with(
+                    'status',
+                    "Lokasi {$updated->name} ({$updated->code}) berhasil diperbarui."
+                );
 
             // BR-L02: Flash warning if moving child under parent that stores items/assets
             if ($request->targetParentHasItems()) {
@@ -136,10 +140,13 @@ class LocationController extends Controller
             $toggled = $locationService->toggleStatus($location);
             $statusLabel = $toggled->is_active ? 'aktif' : 'nonaktif';
 
-            return redirect()->route('locations.index')->with(
-                'status',
-                "Status lokasi {$toggled->name} berhasil diubah menjadi {$statusLabel}."
-            );
+            $redirect = redirect()
+                ->back(fallback: route('locations.index'))
+                ->with(
+                    'status',
+                    "Status lokasi {$toggled->name} berhasil diubah menjadi {$statusLabel}."
+                );
+            return $redirect;
         } catch (LocationBusinessRuleException $e) {
             return redirect()->back()->with('error', $e->getMessage());
         } catch (\Throwable $e) {

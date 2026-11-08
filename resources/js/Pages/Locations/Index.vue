@@ -195,12 +195,14 @@ const setLevelType = (isChild) => {
 const submitLocationForm = () => {
     if (isEditing.value) {
         locationForm.put(`/locations/${currentEditingId.value}`, {
+            preserveScroll: true,
             onSuccess: () => {
                 closeModal();
             },
         });
     } else {
         locationForm.post('/locations', {
+            preserveScroll: true,
             onSuccess: () => {
                 closeModal();
             },
@@ -232,6 +234,7 @@ const confirmToggleStatus = () => {
         {},
         {
             preserveState: true,
+            preserveScroll: true,  
             onFinish: () => {
                 toggleLoading.value = false;
                 closeToggleModal();
