@@ -35,7 +35,7 @@ yarn-error.log
 /uiux/
 /decisions/
 Agent.md
-
+/.agents/skills/inventory-asset-dev
 
 # IDE & OS
 .DS_Store
@@ -55,4 +55,4 @@ docker-compose.override.yml
 
 # SSL certificates
 /docker/nginx/ssl/*
-!/docker/nginx/ssl/.gitkeep
+!/docker/nginx/ssl/.gitkeep
