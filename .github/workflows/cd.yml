@@ -25,10 +25,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if [ -n "${{ github.event.workflow_run.id }}" ]; then
-            # Triggered by workflow_run: gunakan run ID langsung
             RUN_ID="${{ github.event.workflow_run.id }}"
           else
-            # Triggered manual (workflow_dispatch): cari CI run terakhir yang sukses
             RUN_ID=$(gh run list \
               --workflow=ci.yml \
               --branch=develop \
@@ -38,70 +36,73 @@ jobs:
               --jq '.[0].databaseId')
 
             if [ -z "$RUN_ID" ]; then
-              echo "Tidak ada CI run sukses ditemukan di branch develop"
+              echo "Tidak ada CI run sukses ditemukan"
               exit 1
             fi
           fi
 
-          echo "Downloading artifact dari run ID: $RUN_ID"
           gh run download "$RUN_ID" \
             --repo Maulida97/laravel_inventory_asset_management_vue \
             --name frontend-build \
             --dir frontend-build
 
       - name: Deploy to VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         run: |
+          set -e
+
+          : "${VPS_HOST:?VPS_HOST belum diatur}"
+          : "${VPS_PORT:?VPS_PORT belum diatur}"
+          : "${VPS_USER:?VPS_USER belum diatur}"
+          : "${SSH_PRIVATE_KEY:?SSH_PRIVATE_KEY belum diatur}"
+
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/inventra_deploy
+          chmod 700 ~/.ssh
+
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/inventra_deploy
           chmod 600 ~/.ssh/inventra_deploy
 
-          # 1. Prepare source code & pastikan public/build ada
-          ssh \
-            -i ~/.ssh/inventra_deploy \
-            -p "${{ secrets.VPS_PORT }}" \
-            -o StrictHostKeyChecking=no \
-            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
-            "
-              set -e
+          SSH_OPTIONS=(-i ~/.ssh/inventra_deploy
+            -p "$VPS_PORT"
+            -o StrictHostKeyChecking=no
+            -o IdentitiesOnly=yes)
 
-              if [ ! -d /opt/inventra/.git ]; then
-                git clone https://github.com/Maulida97/laravel_inventory_asset_management_vue.git /opt/inventra
-              fi
+          # 1. Update source code
+          ssh "${SSH_OPTIONS[@]}" "$VPS_USER@$VPS_HOST" 'bash -s' <<'REMOTE'
+            set -e
+            cd /opt/inventra
 
-              cd /opt/inventra
-              git fetch origin
-              git checkout develop
-              git reset --hard origin/develop
+            git fetch origin
+            git checkout develop
+            git reset --hard origin/develop
 
-              mkdir -p public/build
+            mkdir -p public/build
+          REMOTE
 
-              if [ ! -f .env ]; then
-                cp .env.example .env
-              fi
-            "
-
-          # 2. Upload frontend build dari CI artifact
+          # 2. Upload frontend build
           scp \
             -i ~/.ssh/inventra_deploy \
-            -P "${{ secrets.VPS_PORT }}" \
+            -P "$VPS_PORT" \
             -o StrictHostKeyChecking=no \
+            -o IdentitiesOnly=yes \
             -r frontend-build/. \
-            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/inventra/public/build/"
+            "$VPS_USER@$VPS_HOST:/opt/inventra/public/build/"
 
-          # 3. Docker & Laravel deploy
-          ssh \
-            -i ~/.ssh/inventra_deploy \
-            -p "${{ secrets.VPS_PORT }}" \
-            -o StrictHostKeyChecking=no \
-            "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" \
-            "
-              set -e
+          # 3. Docker dan Laravel
+          ssh "${SSH_OPTIONS[@]}" "$VPS_USER@$VPS_HOST" 'bash -s' <<'REMOTE'
+            set -e
+            cd /opt/inventra
 
-              cd /opt/inventra
+            docker compose up -d --build
 
-              docker compose up -d --build
-              docker compose exec -T app composer install --no-dev --optimize-autoloader
-              docker compose exec -T app php artisan migrate --force
-              docker compose exec -T app php artisan db:seed --force
-              docker compose exec -T app php artisan optimize
-            "
+            docker compose exec -T app composer install --no-dev --optimize-autoloader
+
+            docker compose exec -T app php artisan migrate --force
+
+            docker compose exec -T app php artisan optimize:clear
+            docker compose exec -T app php artisan optimize
+          REMOTE
