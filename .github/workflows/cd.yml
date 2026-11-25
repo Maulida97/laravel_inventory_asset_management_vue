@@ -60,24 +60,6 @@ jobs:
           : "${VPS_USER:?VPS_USER belum diatur}"
           : "${SSH_PRIVATE_KEY:?SSH_PRIVATE_KEY belum diatur}"
 
-          # Validasi konfigurasi VPS
-          if [[ "$VPS_HOST" != "103.67.79.110" ]]; then
-            echo "ERROR: VPS_HOST tidak sesuai"
-            exit 1
-          fi
-
-          if [[ "$VPS_PORT" != "21013" ]]; then
-            echo "ERROR: VPS_PORT tidak sesuai"
-            exit 1
-          fi
-
-          if [[ "$VPS_USER" != "deploy" ]]; then
-            echo "ERROR: VPS_USER tidak sesuai"
-            exit 1
-          fi
-
-          echo "Konfigurasi VPS valid"
-
           mkdir -p ~/.ssh
           chmod 700 ~/.ssh
 
@@ -91,10 +73,39 @@ jobs:
             -o IdentitiesOnly=yes
           )
 
-          echo "Menguji koneksi SSH..."
+          # 1. Update source code & bersihkan build lama
+          ssh "${SSH_OPTIONS[@]}" "$VPS_USER@$VPS_HOST" 'bash -s' <<'REMOTE'
+            set -e
+            cd /opt/inventra
 
-          ssh "${SSH_OPTIONS[@]}" \
-            "$VPS_USER@$VPS_HOST" \
-            'whoami && hostname'
+            git fetch origin
+            git checkout develop
+            git reset --hard origin/develop
 
-          echo "Koneksi SSH berhasil"
+            rm -rf public/build
+            mkdir -p public/build
+          REMOTE
+
+          # 2. Upload frontend build dari CI artifact
+          scp \
+            -i ~/.ssh/inventra_deploy \
+            -P "$VPS_PORT" \
+            -o StrictHostKeyChecking=no \
+            -o IdentitiesOnly=yes \
+            -r frontend-build/. \
+            "$VPS_USER@$VPS_HOST:/opt/inventra/public/build/"
+
+          # 3. Docker dan Laravel
+          ssh "${SSH_OPTIONS[@]}" "$VPS_USER@$VPS_HOST" 'bash -s' <<'REMOTE'
+            set -e
+            cd /opt/inventra
+
+            docker compose up -d --build
+
+            docker compose exec -T app composer install --no-dev --optimize-autoloader
+
+            docker compose exec -T app php artisan migrate --force
+
+            docker compose exec -T app php artisan optimize:clear
+            docker compose exec -T app php artisan optimize
+          REMOTE
